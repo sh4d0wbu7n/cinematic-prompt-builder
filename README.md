@@ -1,6 +1,6 @@
 # CinePrompt Studio
 
-A dependency-free prompt builder for cinematic still images. It combines subject, camera, composition, lighting, color, grade, texture, and model-specific formatting into a prompt ready for an image model.
+A dependency-free prompt builder for cinematic still images. It combines subject, action, camera look, composition, lighting, color, grade, texture, and unified image-prompt formatting into a prompt ready for image generation.
 
 The full local app supports optional Ollama-based prompt refinement. The public GitHub Pages site deliberately excludes Ollama controls and makes no calls to a local model server.
 
@@ -10,8 +10,8 @@ The full local app supports optional Ollama-based prompt refinement. The public 
 
 ## Features
 
-- Prompt profiles for Nano Banana Pro, Qwen Image 2512, Krea 2, Z-Image Turbo, ERNIE Image, Boogu Image, and GPT Image 2.
-- Camera, lens, framing, angle, lighting, palette, grade, texture, art-direction, and quality controls.
+- Unified model-agnostic image prompt output.
+- Camera-look, lens, framing, angle, lighting, palette, grade, texture, art-direction, and quality controls.
 - `None` bypasses for every builder setting.
 - Local preset storage, JSON export/import, prompt QA, and generated visual reference assets.
 - Optional local Ollama model selection and prompt enhancement in the local app only.

@@ -121,33 +121,6 @@
             min-height: 60px;
         }
 
-        /* --- Mode Selector --- */
-        .mode-selector {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-            gap: 5px;
-            background: #111;
-            padding: 4px;
-            border-radius: var(--radius);
-            margin-bottom: 20px;
-        }
-        .mode-btn {
-            background: transparent;
-            border: none;
-            color: var(--text-muted);
-            padding: 8px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            cursor: pointer;
-            border-radius: 4px;
-            transition: 0.2s;
-            text-align: center;
-        }
-        .mode-btn.active {
-            background: var(--bg-input);
-            color: var(--accent);
-        }
-
         /* --- Aspect Ratio Grid --- */
         .ratio-grid {
             display: grid;
@@ -420,7 +393,6 @@
             header { padding: 0 12px; }
             .sidebar { padding: 20px; }
             .preset-row, .preset-actions { grid-template-columns: 1fr; flex-direction: column; }
-            .mode-selector { grid-template-columns: 1fr; }
             /* OLLAMA-START */
             .ollama-connection, .ollama-controls { grid-template-columns: 1fr; }
             .ollama-status { text-align: left; }
@@ -440,12 +412,14 @@
 <div class="app-container">
     <aside class="sidebar" id="sidebar">
         
-        <div class="label">Target Model</div>
-        <div class="mode-selector" id="modelSelector"></div>
-
         <div class="control-group">
             <div class="label label-with-action">Primary Subject <button id="lock-subject" class="lock-btn" onclick="toggleLock('subject')">Lock</button></div>
             <input type="text" id="subjectInput" placeholder="A lone cyborg in a rainy alleyway..." value="A lone astronaut exploring a cave">
+        </div>
+
+        <div class="control-group">
+            <div class="label label-with-action">Subject Action <button id="lock-actionText" class="lock-btn" onclick="toggleLock('actionText')">Lock</button></div>
+            <input type="text" id="actionInput" placeholder="walking through fog, holding a cracked helmet, looking off-frame...">
         </div>
 
         <div class="control-group">
@@ -463,6 +437,8 @@
             <textarea id="negativeInput" class="input-field" placeholder="blurry, distorted, low quality, duplicate..."></textarea>
         </div>
 
+        <div id="controlsContainer"></div>
+
         <div class="control-group">
             <div class="label">Local Presets</div>
             <div class="preset-row">
@@ -478,8 +454,6 @@
                 <button class="btn btn-action btn-small" onclick="loadRecentPrompt()">Recent</button>
             </div>
         </div>
-
-        <div id="controlsContainer"></div>
     </aside>
 
     <main class="preview-panel">
@@ -532,7 +506,7 @@
                 </select>
                 <button id="ollamaEnhanceButton" class="btn btn-primary" type="button" onclick="enhanceWithOllama()" disabled>Enhance</button>
             </div>
-            <textarea id="ollamaInstruction" class="input-field ollama-instruction" aria-label="Enhancement instruction">Improve the prompt's cinematic specificity and visual clarity. Preserve every explicit subject, composition, camera, color, exact text, and constraint. Return only the enhanced image prompt.</textarea>
+            <textarea id="ollamaInstruction" class="input-field ollama-instruction" aria-label="Enhancement instruction">Rewrite this into a richer production-ready cinematic still-image prompt. Add concrete visual detail, atmosphere, material texture, composition clarity, and stronger lighting/color language while preserving every explicit subject, action, camera look, exact visible text, aspect ratio, and avoid constraint. Return only the enhanced image prompt.</textarea>
         </div>
 
         <div id="ollamaOutputGroup" class="output-group" hidden>
@@ -575,64 +549,17 @@
         // OLLAMA-END
     };
 
-    const modelProfiles = [
-        {
-            id: "nanobanana",
-            label: "Nano Banana Pro",
-            desc: "Natural language, high-end prompt mode for cinematic stills and iterative image work.",
-            note: "Nano Banana Pro mode writes a fluent, instruction-style prompt. It keeps the scene readable, places exact visible text when supplied, and treats the negative box as visual constraints.",
-            negativeHandling: "Folded into the final prompt as avoid/cleanup guidance.",
-            settings: { promptLength: "medium", enhancer: "use conversational refinement", aspectRatio: "use selected ratio" }
-        },
-        {
-            id: "qwen2512",
-            label: "Qwen Image 2512",
-            desc: "Concise faithful mode based on the Qwen rewrite guide: minimal expansion, preserve intent, avoid invented details.",
-            note: "Qwen Image 2512 mode keeps the prompt concise and faithful. The local guide says not to over-expand clear prompts and not to inject negation words into the rewritten prompt, so negative terms stay in JSON.",
-            negativeHandling: "Stored separately in JSON; not inserted into the positive prompt.",
-            settings: { promptLength: "short-to-medium", textRule: "quote exact visible text", styleRule: "keep named styles once" }
-        },
-        {
-            id: "krea2",
-            label: "Krea 2",
-            desc: "Clean direct visual-description mode. The local Krea PDF is empty, so this uses a conservative generic profile.",
-            note: "Krea 2 mode uses a clean direct description with strong visual hierarchy. The provided Krea guide file is zero bytes, so this profile is intentionally conservative.",
-            negativeHandling: "Folded into a short avoid clause.",
-            settings: { promptLength: "medium", guideStatus: "local guide file is empty" }
-        },
-        {
-            id: "zimage",
-            label: "Z-Image Turbo",
-            desc: "Structured camera-style prompt. Turbo does not use a traditional negative prompt in the official workflow.",
-            note: "Z-Image Turbo mode follows the local guide: detailed camera-style prompts, explicit subject/action/lighting, and guidance_scale 0. Negative prompts are not formal inputs, so constraints are baked into the positive text.",
-            negativeHandling: "Official Turbo workflow ignores separate negative prompts; constraints are embedded.",
-            settings: { steps: "8-12", guidance_scale: 0, maxText: "512-1024 tokens when needed" }
-        },
-        {
-            id: "ernie",
-            label: "ERNIE Image",
-            desc: "Structured prompt mode: subject, details, style/medium, and technical parameters.",
-            note: "ERNIE Image mode uses the guide's four-part structure. Use the model enhancer for short drafts; turn it off for precise final prompts or exact text layouts.",
-            negativeHandling: "Folded into the positive prompt as explicit exclusions.",
-            settings: { turbo: "8 steps, guidance 1.0", standard: "50 steps, guidance 4.0", sweetSpot: "50-150 words" }
-        },
-        {
-            id: "boogu",
-            label: "Boogu Image",
-            desc: "Single-block English prompt mode with explicit text/no-text statements.",
-            note: "Boogu Image mode follows the local rewriter: one natural English block, rich visual details when useful, exact quoted text, and a statement when no recognizable text should appear.",
-            negativeHandling: "Converted into plain-language cleanup guidance.",
-            settings: { output: "single continuous block", textRule: "quote all visible text" }
-        },
-        {
-            id: "gptimage2",
-            label: "GPT Image 2",
-            desc: "Instruction-first prompt mode for precise scene composition and text placement.",
-            note: "GPT Image 2 mode writes a clear creation instruction with exact subject, composition, lighting, text, and constraints. The provided PDF is image-rendered, so this profile uses a practical instruction format.",
-            negativeHandling: "Included as constraints in the instruction.",
-            settings: { promptLength: "medium-to-detailed", textRule: "explicit quoted text and placement" }
+    const unifiedProfile = {
+        id: "unified",
+        label: "Unified Image Prompt",
+        note: "Unified mode writes one detailed, model-agnostic image prompt for cinematic still generation. Use the local enhancer when you want a richer final version without changing the builder settings.",
+        negativeHandling: "Included as explicit visual constraints in the final prompt.",
+        settings: {
+            promptLength: "detailed",
+            textRule: "quote exact visible text",
+            target: "model-agnostic image generation"
         }
-    ];
+    };
 
     const categories = {
         ratio: {
@@ -679,20 +606,14 @@
             ]
         },
         camera: {
-            title: "Camera Model",
+            title: "Camera Look",
             type: "select",
             options: [
-                { id: "arri", label: "Arri Alexa LF", value: "shot on Arri Alexa LF", desc: "Industry standard digital cinema with high dynamic range." },
-                { id: "redkomodo", label: "RED Komodo", value: "shot on RED Komodo 6K", desc: "Compact cinema camera look with crisp digital detail and punchy color." },
-                { id: "canonff", label: "Canon Full Frame DSLR", value: "shot on a Canon full-frame DSLR", desc: "Natural full-frame still photography with warm Canon color and familiar DSLR texture." },
-                { id: "sonyalpha", label: "Sony Alpha", value: "shot on Sony Alpha full-frame mirrorless", desc: "Hybrid photo/video look, clean low light, sharp digital detail." },
-                { id: "badphone", label: "Bad Smartphone", value: "shot on a cheap old smartphone camera", desc: "Low dynamic range, smeared detail, harsh sharpening, tiny sensor noise." },
-                { id: "imax70", label: "IMAX 70mm Film", value: "shot on IMAX 70mm Film", desc: "Huge resolution and depth. Grand theatrical scale." },
-                { id: "panavision", label: "Panavision Millennium", value: "shot on Panavision Millennium DXL2", desc: "Warm skin tones and Hollywood cinema aesthetics." },
-                { id: "sony", label: "Sony Venice 2", value: "shot on Sony Venice 2", desc: "Modern digital cinema with strong low-light performance." },
-                { id: "iphone", label: "iPhone 15 Pro", value: "shot on iPhone 15 Pro", desc: "Sharp mobile video look with deep depth of field." },
-                { id: "polaroid", label: "Polaroid SX-70", value: "Polaroid SX-70 instant film", desc: "Soft, nostalgic, chemical borders and faded colors." },
-                { id: "gopro", label: "GoPro Hero", value: "shot on GoPro Hero", desc: "Wide, distorted action-camera feeling." }
+                { id: "cinema", label: "Digital Cinema", value: "large-sensor high dynamic range digital cinema look, controlled highlight rolloff, deep color separation, clean professional detail", desc: "Polished cinema-camera image without naming a brand.", previewId: "arri" },
+                { id: "smartphone", label: "Smartphone Camera", value: "small-sensor smartphone camera look, deep focus, computational sharpening, compact-lens contrast, limited highlight latitude", desc: "Modern phone image language without naming a device.", previewId: "iphone" },
+                { id: "consumer", label: "Digital Consumer Camera", value: "consumer digital camera look, crisp JPEG-style sharpness, compact zoom optics, practical automatic exposure, everyday color response", desc: "Point-and-shoot or entry-level camera feel.", previewId: "canonff" },
+                { id: "surveillance", label: "Surveillance Camera", value: "fixed surveillance camera look, high-mounted wide angle, compressed security footage, harsh automatic exposure, utilitarian image quality", desc: "Security-camera perspective and texture.", previewId: "gopro" },
+                { id: "polaroid", label: "Polaroid Camera", value: "instant photo look, soft focus, chemical color shifts, imperfect exposure, tactile white border nostalgia", desc: "Soft instant-film character.", previewId: "polaroid" }
             ]
         },
         focal: {
@@ -723,23 +644,9 @@
                 { id: "f22", val: "f/22", label: "f/22", desc: "Maximum depth. Risk of diffraction softness." }
             ]
         },
-        action: {
-            title: "Subject Action",
-            type: "select",
-            hasPreview: false,
-            options: [
-                { id: "still", label: "Still Pose", value: "holding a still, deliberate pose", desc: "A composed cinematic frame." },
-                { id: "walk", label: "Walking", value: "walking through the scene", desc: "Everyday motion and narrative movement." },
-                { id: "run", label: "Running", value: "running with visible urgency", desc: "Action and momentum." },
-                { id: "turn", label: "Turning", value: "turning toward the camera", desc: "A reveal or reaction beat." },
-                { id: "reach", label: "Reaching", value: "reaching toward an object just out of frame", desc: "Creates tension and intent." },
-                { id: "lookoff", label: "Looking Off-Frame", value: "looking off-frame with focused attention", desc: "Suggests a world beyond the frame." },
-                { id: "interact", label: "Interacting", value: "interacting naturally with the environment", desc: "Connects subject to setting." }
-            ]
-        },
         lighting: {
             title: "Lighting",
-            type: "select",
+            type: "grid",
             options: [
                 { id: "volumetric", label: "Volumetric / God Rays", value: "volumetric lighting", desc: "Light beams visible in air or fog." },
                 { id: "biolum", label: "Bioluminescence", value: "bioluminescent lighting", desc: "Glowing organic blue-green light." },
@@ -758,7 +665,7 @@
         },
         palette: {
             title: "Color Palette",
-            type: "select",
+            type: "grid",
             options: [
                 { id: "tealorange", label: "Teal & Orange", value: "teal and orange palette", desc: "Cool shadows and warm skin tones." },
                 { id: "velvia", label: "Fujifilm Velvia", value: "Fujifilm Velvia color palette", desc: "High saturation, deep blacks, vivid nature colors." },
@@ -782,8 +689,7 @@
         },
         grading: {
             title: "Color Grading",
-            type: "select",
-            hasPreview: false,
+            type: "grid",
             options: [
                 { id: "kodak2383", label: "Kodak 2383 Print", value: "Kodak 2383 film print grade", desc: "Classic print-film contrast and warm highlights." },
                 { id: "bleach", label: "Bleach Bypass", value: "bleach bypass grade", desc: "Silver-retention look: harsh contrast, muted saturation." },
@@ -896,14 +802,12 @@
     addBypassOptions();
 
     const defaultState = () => ({
-        model: "nanobanana",
         ratio: "16-9",
-        camera: "arri",
+        camera: "cinema",
         framing: "wide",
         angle: "eye",
         focal: "50mm",
         dof: 2,
-        action: "still",
         lighting: "volumetric",
         palette: "tealorange",
         grading: "kodak2383",
@@ -921,7 +825,6 @@
     // OLLAMA-END
 
     const controlsContainer = document.getElementById("controlsContainer");
-    const modelSelector = document.getElementById("modelSelector");
     const visualBox = document.getElementById("visualBox");
     const previewImage = document.getElementById("previewImage");
     const visualCaption = document.getElementById("visualCaption");
@@ -933,6 +836,7 @@
     const qaPanel = document.getElementById("qaPanel");
     const recipePanel = document.getElementById("recipePanel");
     const subjectInput = document.getElementById("subjectInput");
+    const actionInput = document.getElementById("actionInput");
     const sceneInput = document.getElementById("sceneInput");
     const visibleTextInput = document.getElementById("visibleTextInput");
     const negativeInput = document.getElementById("negativeInput");
@@ -951,12 +855,11 @@
 
     function init() {
         loadAutosave();
-        renderModelSelector();
         renderControls();
         renderPresetList();
         updateUI();
         setPreview(categories.camera, state.camera);
-        [subjectInput, sceneInput, visibleTextInput, negativeInput].forEach(input => {
+        [subjectInput, actionInput, sceneInput, visibleTextInput, negativeInput].forEach(input => {
             input.addEventListener("input", updatePrompt);
         });
         window.addEventListener("resize", updateUI);
@@ -966,28 +869,6 @@
         // OLLAMA-END
         initialized = true;
         updatePrompt();
-    }
-
-    function renderModelSelector() {
-        modelSelector.innerHTML = "";
-        modelProfiles.forEach(model => {
-            const button = document.createElement("button");
-            button.className = "mode-btn";
-            button.dataset.model = model.id;
-            button.textContent = model.label;
-            button.onclick = () => setModel(model.id);
-            button.onmouseenter = () => showInfo(model.label, model.desc);
-            modelSelector.appendChild(button);
-        });
-    }
-
-    function setModel(modelId) {
-        state.model = modelProfiles.some(m => m.id === modelId) ? modelId : "nanobanana";
-        updateUI();
-    }
-
-    function setMode(mode) {
-        setModel(mode);
     }
 
     function renderControls() {
@@ -1018,6 +899,8 @@
                 group.appendChild(renderSliderControl(key, cat));
             } else if (cat.type === "multi") {
                 group.appendChild(renderMultiControl(key, cat));
+            } else if (cat.type === "grid") {
+                group.appendChild(renderGridControl(key, cat));
             }
             controlsContainer.appendChild(group);
         });
@@ -1127,6 +1010,28 @@
         return grid;
     }
 
+    function renderGridControl(key, cat) {
+        const grid = document.createElement("div");
+        grid.className = "multi-grid";
+        cat.options.forEach(opt => {
+            const card = document.createElement("div");
+            card.className = "grid-card";
+            card.id = `grid-${key}-${opt.id}`;
+            card.onclick = () => {
+                state[key] = opt.id;
+                updateUI();
+                setPreview(cat, opt.id);
+            };
+            card.onmouseenter = () => setPreview(cat, opt.id);
+            const title = document.createElement("div");
+            title.className = "grid-card-title";
+            title.textContent = opt.label;
+            card.appendChild(title);
+            grid.appendChild(card);
+        });
+        return grid;
+    }
+
     function closeOpenSelects(e) {
         document.querySelectorAll(".custom-select-wrapper").forEach(select => {
             if (!select.contains(e.target)) select.classList.remove("open");
@@ -1147,7 +1052,8 @@
             return;
         }
         const catKey = Object.keys(categories).find(key => categories[key] === categoryObj);
-        const fileName = `${catKey}_${id}${ASSET_EXT}`;
+        const previewId = opt.previewId || id;
+        const fileName = `${catKey}_${previewId}${ASSET_EXT}`;
         previewImage.dataset.expectedName = fileName;
         previewImage.src = ASSET_PATH + fileName;
         previewImage.style.display = "block";
@@ -1206,9 +1112,6 @@
     }
 
     function updateUI() {
-        document.querySelectorAll(".mode-btn").forEach(btn => {
-            btn.classList.toggle("active", btn.dataset.model === state.model);
-        });
         document.querySelectorAll(".ratio-btn").forEach(btn => {
             btn.classList.toggle("active", btn.dataset.id === state.ratio);
         });
@@ -1249,6 +1152,11 @@
                     const el = document.getElementById(`multi-${key}-${opt.id}`);
                     if (el) el.classList.toggle("active", Array.isArray(state[key]) && state[key].includes(opt.id));
                 });
+            } else if (cat.type === "grid") {
+                cat.options.forEach(opt => {
+                    const el = document.getElementById(`grid-${key}-${opt.id}`);
+                    if (el) el.classList.toggle("active", state[key] === opt.id);
+                });
             } else if (cat.type === "slider") {
                 const slider = document.getElementById(`${key}Slider`);
                 const value = document.getElementById(`${key}Value`);
@@ -1264,13 +1172,20 @@
             subjectLock.textContent = locked ? "Locked" : "Lock";
         }
 
+        const actionTextLock = document.getElementById("lock-actionText");
+        if (actionTextLock) {
+            const locked = Boolean(state.locks && state.locks.actionText);
+            actionTextLock.classList.toggle("active", locked);
+            actionTextLock.textContent = locked ? "Locked" : "Lock";
+        }
+
         updatePrompt();
     }
 
     function updatePrompt() {
         const ctx = buildContext();
         const profile = getModelProfile();
-        const finalPrompt = buildPromptForModel(ctx, profile);
+        const finalPrompt = buildUnifiedPrompt(ctx);
         promptOutput.value = finalPrompt;
         modelNoteOutput.textContent = profile.note;
         renderRecipe(ctx, profile);
@@ -1369,16 +1284,15 @@
     }
 
     function buildOllamaSystemPrompt(ctx, profile) {
-        const qwenRule = profile.id === "qwen2512"
-            ? "Keep the result concise and do not introduce negative-prompt phrasing."
-            : "Keep any avoid constraints precise and compatible with the source prompt.";
         return cleanJoin([
-            "You are a precise image-prompt editor for CinePrompt Studio.",
+            "You are a senior cinematic image-prompt writer for CinePrompt Studio.",
             "Return only one completed image prompt. Do not add an introduction, explanation, markdown, headings, or labels.",
-            "Preserve every explicit subject, composition, camera, lens, lighting, palette, grade, art direction, texture, aspect ratio, visible text, and constraint from the source prompt.",
+            "Transform the source into a richer, production-ready still-image prompt with stronger scene specificity, material details, atmospheric cues, cinematic composition, and visual hierarchy.",
+            "Preserve every explicit subject, action, composition, camera look, lens, lighting, palette, grade, art direction, texture, aspect ratio, visible text, and constraint from the source prompt.",
             "Do not invent subjects, brand names, story beats, or readable text. Keep visible text exactly unchanged.",
-            qwenRule,
-            `The target image-model formatter is ${profile.label}. ${profile.note}`,
+            "Expand vague phrases into concrete visual language, but keep the same intent and avoid contradicting selected settings.",
+            "Use one cohesive paragraph unless the source prompt clearly needs sentence separation.",
+            `The target formatter is ${profile.label}. ${profile.note}`,
             ctx.visibleText ? `The exact visible text requirement is: ${ctx.textInstruction}.` : "The source prompt does not request visible text."
         ], " ");
     }
@@ -1427,8 +1341,8 @@
                         {
                             role: "user",
                             content: cleanJoin([
-                                `Enhancement instruction: ${cleanText(ollamaInstructionInput.value) || "Improve clarity without changing requirements."}`,
-                                `Target model: ${profile.label}.`,
+                                `Enhancement instruction: ${cleanText(ollamaInstructionInput.value) || "Rewrite into a detailed cinematic still-image prompt while preserving all explicit requirements."}`,
+                                `Target format: ${profile.label}.`,
                                 `Source prompt:\n${prompt}`
                             ], "\n\n")
                         }
@@ -1459,6 +1373,7 @@
 
     function buildContext() {
         const subject = cleanText(subjectInput.value) || "A subject";
+        const action = cleanText(actionInput.value);
         const scene = cleanText(sceneInput.value);
         const visibleText = cleanText(visibleTextInput.value);
         const negative = cleanText(negativeInput.value);
@@ -1476,6 +1391,7 @@
         const textureText = getMultiValues("texture").map(o => o.value).join(", ");
         return {
             subject,
+            action,
             scene,
             visibleText,
             negative,
@@ -1487,84 +1403,20 @@
         };
     }
 
-    function buildPromptForModel(ctx, profile) {
+    function buildUnifiedPrompt(ctx) {
         const s = ctx.selected;
         const subjectLine = s.framing.value ? `${s.framing.value} of ${ctx.subject}` : ctx.subject;
-        const action = s.action.value;
+        const action = ctx.action;
         const camera = cleanJoin([s.camera.value, s.focal.value, s.dof.val, s.angle.value], ", ");
         const look = cleanJoin([s.lighting.value, s.palette.value, s.grading.value], ", ");
         const style = cleanJoin([ctx.styleText, s.artist.value, ctx.textureText, s.quality.value], ", ");
         const ratio = s.ratio.value;
         const composition = cleanJoin([camera, ratio], ", ");
 
-        if (profile.id === "qwen2512") {
-            const parts = [ctx.styleText, subjectLine, ctx.scene, action, camera, look, s.artist.value, ctx.textureText, s.quality.value, ratio, ctx.textInstruction && `visible text ${ctx.textInstruction}`];
-            return cleanJoin(parts, ", ");
-        }
-
-        if (profile.id === "zimage") {
-            return cleanJoin([
-                `${cleanJoin([subjectLine, action], ", ")}.`,
-                ctx.scene && `Environment and background: ${ctx.scene}.`,
-                composition && `Camera and composition: ${composition}.`,
-                look && `Lighting and color: ${look}.`,
-                style && `Style and finish: ${style}.`,
-                ctx.textInstruction && `Render only this visible text exactly: ${ctx.textInstruction}.`,
-                `Technical cleanup: ${ctx.constraints || "no watermark, no random text, correct human anatomy, clean background"}.`
-            ], " ");
-        }
-
-        if (profile.id === "ernie") {
-            return cleanJoin([
-                cleanJoin([subjectLine, action, ctx.scene || "clear cinematic environment"], ", "),
-                style,
-                composition,
-                look,
-                ctx.textInstruction && `text reads ${ctx.textInstruction}`,
-                ctx.constraints && `avoid ${ctx.constraints}`
-            ], ". ");
-        }
-
-        if (profile.id === "boogu") {
-            return cleanJoin([
-                `${subjectLine}${action ? `, ${action},` : ""} set in ${ctx.scene || "a clearly defined cinematic environment"}.`,
-                composition && `The composition uses ${composition}${look ? `, with ${look}` : ""}.`,
-                style && `The artistic style is ${style}.`,
-                ctx.visibleText ? `The image includes visible text ${ctx.textInstruction}, with accurate placement, readable lettering, and no altered wording.` : "The image contains no recognizable text.",
-                ctx.constraints && `Keep the final image clean by avoiding ${ctx.constraints}.`
-            ], " ");
-        }
-
-        if (profile.id === "gptimage2") {
-            return cleanJoin([
-                `Create a cinematic image: ${cleanJoin([subjectLine, action], ", ")}.`,
-                ctx.scene && `Use these scene details: ${ctx.scene}.`,
-                composition && `Compose it with ${composition}.`,
-                look && `Lighting, palette, and grade: ${look}.`,
-                style && `Style references and finish: ${style}.`,
-                ctx.textInstruction ? `Render the visible text exactly as ${ctx.textInstruction}; do not invent extra text.` : "Do not add readable text unless it is necessary for the scene.",
-                ctx.constraints && `Avoid: ${ctx.constraints}.`
-            ], " ");
-        }
-
-        if (profile.id === "krea2") {
-            return cleanJoin([
-                `${subjectLine}`,
-                ctx.scene,
-                action,
-                camera,
-                look,
-                style,
-                ratio,
-                ctx.textInstruction && `visible text ${ctx.textInstruction}`,
-                ctx.constraints && `avoid ${ctx.constraints}`
-            ], ", ");
-        }
-
         return cleanJoin([
             `High-end cinematic photography: ${subjectLine}.`,
             ctx.scene && `Scene: ${ctx.scene}.`,
-            action && `Subject action: ${action}.`,
+            action && `Subject action and intent: ${action}.`,
             camera && `Cinematography: ${camera}.`,
             look && `Lighting and color: ${look}.`,
             style && `Style: ${style}.`,
@@ -1576,11 +1428,11 @@
 
     function renderRecipe(ctx, profile) {
         const chips = [
-            ["Model", profile.label],
+            ["Format", profile.label],
             ["Camera", ctx.selected.camera.label],
             ["Lens", ctx.selected.focal.label],
             ["Grade", ctx.selected.grading.label],
-            ["Action", ctx.selected.action.label],
+            ["Action", ctx.action || "None"],
             ["Ratio", ctx.selected.ratio.label]
         ];
         recipePanel.innerHTML = chips.map(([k, v]) => `<span class="recipe-chip"><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</span>`).join("");
@@ -1596,10 +1448,6 @@
         if ((state.texture || []).includes("clean") && ["grain", "vhs", "burn", "gateweave"].some(id => state.texture.includes(id))) {
             warnings.push("Clean Digital conflicts with analog texture choices such as grain, VHS, burn, or gate weave.");
         }
-        if (profile.id === "qwen2512" && ctx.negative) warnings.push("Qwen mode keeps negative terms out of the positive prompt and stores them in JSON only.");
-        if (profile.id === "zimage" && ctx.negative) warnings.push("Z-Image Turbo ignores formal negative prompts; constraints are embedded in the positive text.");
-        if (profile.id === "krea2") warnings.push("Krea 2 guide file is empty, so this mode uses a conservative generic formatter.");
-        if (profile.id === "ernie" && words > 170) warnings.push("ERNIE guide suggests 50-150 words as a practical sweet spot for many prompts.");
         if (ctx.visibleText && ctx.visibleText.length > 80) warnings.push("Long visible text is harder to render accurately. Short, quoted text blocks work better.");
         const warningHtml = warnings.length ? `<ul>${warnings.map(w => `<li>${escapeHtml(w)}</li>`).join("")}</ul>` : "";
         qaPanel.classList.toggle("warning", warnings.length > 0);
@@ -1608,9 +1456,10 @@
 
     function buildJsonOutput(ctx, profile, finalPrompt) {
         return {
-            model: profile.label,
-            model_id: profile.id,
+            format: profile.label,
+            format_id: profile.id,
             subject: ctx.subject,
+            action: ctx.action,
             scene_details: ctx.scene,
             visible_text: ctx.visibleText,
             negative_prompt: ctx.negative,
@@ -1622,7 +1471,6 @@
                 angle: ctx.selected.angle.label,
                 lens: ctx.selected.focal.label,
                 aperture: ctx.selected.dof.label,
-                action: ctx.selected.action.label,
                 lighting: ctx.selected.lighting.label,
                 palette: ctx.selected.palette.label,
                 grading: ctx.selected.grading.label,
@@ -1631,7 +1479,7 @@
                 artist_or_director: ctx.selected.artist.label,
                 quality: ctx.selected.quality.label
             },
-            suggested_model_settings: profile.settings,
+            suggested_prompt_settings: profile.settings,
             raw_prompt: finalPrompt
         };
     }
@@ -1650,13 +1498,26 @@
         return cat.options.find(o => o.id === id) || cat.options[0];
     }
 
+    function normalizeActionText(value) {
+        const oldActionMap = {
+            still: "holding a still, deliberate pose",
+            walk: "walking through the scene",
+            run: "running with visible urgency",
+            turn: "turning toward the camera",
+            reach: "reaching toward an object just out of frame",
+            lookoff: "looking off-frame with focused attention",
+            interact: "interacting naturally with the environment"
+        };
+        return oldActionMap[value] || value;
+    }
+
     function getMultiValues(key) {
         const ids = Array.isArray(state[key]) ? state[key] : [];
         return ids.filter(id => id !== "none").map(id => getOption(key, id)).filter(Boolean);
     }
 
     function getModelProfile() {
-        return modelProfiles.find(m => m.id === state.model) || modelProfiles[0];
+        return unifiedProfile;
     }
 
     function cleanText(value) {
@@ -1682,7 +1543,7 @@
     }
 
     function randomize() {
-        const randomCats = ["ratio", "camera", "framing", "angle", "focal", "action", "lighting", "palette", "grading", "artist", "quality"];
+        const randomCats = ["ratio", "camera", "framing", "angle", "focal", "lighting", "palette", "grading", "artist", "quality"];
         randomCats.forEach(key => {
             if (state.locks && state.locks[key]) return;
             state[key] = randomFrom(categories[key].options).id;
@@ -1697,6 +1558,10 @@
         if (!(state.locks && state.locks.subject)) {
             const subjects = ["A cyberpunk detective", "An ancient forest temple", "A race car on a neon track", "A cyborg geisha", "A lonely lighthouse", "A samurai in a field of flowers", "A spaceship landing on Mars", "A detective entering a neon motel", "A red desert research station"];
             subjectInput.value = randomFrom(subjects);
+        }
+        if (!(state.locks && state.locks.actionText)) {
+            const actions = ["standing still with quiet tension", "walking through drifting mist", "reaching toward an object just out of frame", "turning toward the camera mid-reveal", "looking off-frame with focused attention", "interacting naturally with the environment"];
+            actionInput.value = randomFrom(actions);
         }
         updateUI();
     }
@@ -1714,6 +1579,7 @@
             version: 4,
             state,
             subject: subjectInput.value,
+            action: actionInput.value,
             scene: sceneInput.value,
             visibleText: visibleTextInput.value,
             negative: negativeInput.value,
@@ -1725,6 +1591,7 @@
         const incoming = data.state || data;
         state = normalizeState(incoming);
         subjectInput.value = data.subject || incoming.subject || "";
+        actionInput.value = normalizeActionText(data.action || incoming.actionText || incoming.action || "");
         sceneInput.value = data.scene || incoming.scene || "";
         visibleTextInput.value = data.visibleText || incoming.visibleText || "";
         negativeInput.value = data.negative || incoming.negative || "";
@@ -1733,15 +1600,20 @@
 
     function normalizeState(input) {
         const next = defaultState();
-        const oldModeMap = {
-            midjourney: "nanobanana",
-            stablediffusion: "krea2",
-            flux: "krea2",
-            nanobanana: "nanobanana"
-        };
         const merged = { ...next, ...input };
-        if (!merged.model && merged.mode) merged.model = oldModeMap[merged.mode] || "nanobanana";
-        if (!modelProfiles.some(m => m.id === merged.model)) merged.model = "nanobanana";
+        const oldCameraMap = {
+            arri: "cinema",
+            redkomodo: "cinema",
+            imax70: "cinema",
+            panavision: "cinema",
+            sony: "cinema",
+            sonyalpha: "consumer",
+            canonff: "consumer",
+            iphone: "smartphone",
+            badphone: "smartphone",
+            gopro: "surveillance"
+        };
+        if (oldCameraMap[merged.camera]) merged.camera = oldCameraMap[merged.camera];
         Object.keys(categories).forEach(key => {
             const cat = categories[key];
             if (cat.type === "multi") {
@@ -1846,6 +1718,7 @@
         const incoming = data.state || data;
         state = normalizeState(incoming);
         subjectInput.value = data.subject || incoming.subject || subjectInput.value;
+        actionInput.value = normalizeActionText(data.action || incoming.actionText || incoming.action || "");
         sceneInput.value = data.scene || incoming.scene || "";
         visibleTextInput.value = data.visibleText || incoming.visibleText || "";
         negativeInput.value = data.negative || incoming.negative || "";
@@ -1864,7 +1737,7 @@
             return;
         }
         promptOutput.value = recent[0].prompt;
-        showInfo("Recent Prompt", `Loaded the latest copied prompt from ${recent[0].model}.`);
+        showInfo("Recent Prompt", `Loaded the latest copied prompt from ${recent[0].model || "Unified Image Prompt"}.`);
     }
 
     function readStorage(key, fallback) {
@@ -1910,6 +1783,7 @@
     function resetAll() {
         state = defaultState();
         subjectInput.value = "";
+        actionInput.value = "";
         sceneInput.value = "";
         visibleTextInput.value = "";
         negativeInput.value = "";
