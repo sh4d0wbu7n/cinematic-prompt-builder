@@ -1,4 +1,4 @@
-# Cinematic Prompt Builder
+# CinePrompt Studio
 
 A dependency-free prompt builder for cinematic still images. It combines subject, camera, composition, lighting, color, grade, texture, and model-specific formatting into a prompt ready for an image model.
 
@@ -6,7 +6,7 @@ The full local app supports optional Ollama-based prompt refinement. The public 
 
 ## Live Demo
 
-[Open the GitHub Pages version](https://sh4d0wbu7n.github.io/cinematic-prompt-builder/)
+[Open the GitHub Pages version](https://sh4d0wbu7n.github.io/cineprompt-studio/)
 
 ## Features
 
@@ -31,6 +31,13 @@ node --version
 ### Start the App
 
 Clone the repository, open a terminal in its directory, and run:
+
+```powershell
+git clone https://github.com/sh4d0wbu7n/cineprompt-studio.git
+cd cineprompt-studio
+```
+
+Then start the app:
 
 ```powershell
 node serve-local.mjs
@@ -71,6 +78,10 @@ node scripts/build-pages.mjs
 ```
 
 The generated `dist/` folder is ignored by Git. It is validated during the build and fails if an Ollama reference remains.
+
+## Origin and License
+
+CinePrompt Studio is based on [yedp123/yedp123.github.io](https://github.com/yedp123/yedp123.github.io). The original project's MIT license and copyright notice are preserved in [LICENSE](LICENSE).
 
 ## Project Layout
 

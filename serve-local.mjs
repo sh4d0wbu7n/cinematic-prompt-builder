@@ -42,5 +42,5 @@ const server = createServer(async (request, response) => {
 });
 
 server.listen(port, "127.0.0.1", () => {
-    console.log(`Cinematic Prompt Builder is running at http://localhost:${port}`);
+    console.log(`CinePrompt Studio is running at http://localhost:${port}`);
 });
