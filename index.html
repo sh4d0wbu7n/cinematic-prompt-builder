@@ -506,7 +506,7 @@
                 </select>
                 <button id="ollamaEnhanceButton" class="btn btn-primary" type="button" onclick="enhanceWithOllama()" disabled>Enhance</button>
             </div>
-            <textarea id="ollamaInstruction" class="input-field ollama-instruction" aria-label="Enhancement instruction">Rewrite this into a richer production-ready cinematic still-image prompt. Add concrete visual detail, atmosphere, material texture, composition clarity, and stronger lighting/color language while preserving every explicit subject, action, camera look, exact visible text, aspect ratio, and avoid constraint. Return only the enhanced image prompt.</textarea>
+            <textarea id="ollamaInstruction" class="input-field ollama-instruction" aria-label="Enhancement instruction">Rewrite this into a richer production-ready cinematic still-image prompt using physical cinematography decisions. Strengthen motivated light source and direction, exposure behavior, lens/camera texture, material realism, atmosphere, and anti-AI-gloss constraints while preserving every explicit subject, action, camera look, exact visible text, aspect ratio, and avoid constraint. Return only the enhanced image prompt.</textarea>
         </div>
 
         <div id="ollamaOutputGroup" class="output-group" hidden>
@@ -663,6 +663,50 @@
                 { id: "chiaroscuro", label: "Chiaroscuro", value: "chiaroscuro lighting", desc: "High contrast between light and shadow." }
             ]
         },
+        lightSource: {
+            title: "Motivated Light Source",
+            type: "grid",
+            hasPreview: false,
+            options: [
+                { id: "window", label: "Window Light", value: "lighting motivated by soft window light and natural interior bounce", desc: "Believable interior light source." },
+                { id: "street", label: "Street Lamps", value: "lighting motivated by street lamps and practical urban spill", desc: "Grounded city-night source." },
+                { id: "dashboard", label: "Dashboard Glow", value: "lighting motivated by dashboard glow, instrument panels, and reflected car-window light", desc: "Intimate vehicle or cockpit source." },
+                { id: "tablelamp", label: "Table Lamp", value: "lighting motivated by a warm table lamp and nearby practical bulbs", desc: "Warm interior practical." },
+                { id: "overcastsky", label: "Overcast Sky", value: "lighting motivated by heavy overcast sky and soft environmental bounce", desc: "Flat natural daylight." },
+                { id: "fire", label: "Firelight", value: "lighting motivated by firelight, candlelight, embers, and warm flicker", desc: "Warm practical flame source." },
+                { id: "headlights", label: "Headlights", value: "lighting motivated by car headlights, hard beams, and wet ground reflections", desc: "Directional practical beams." },
+                { id: "monitor", label: "Screen Glow", value: "lighting motivated by computer monitors, CRT glow, phone screens, and reflected display light", desc: "Cool tech source." },
+                { id: "neonsign", label: "Neon Sign", value: "lighting motivated by neon signage and practical colored reflections", desc: "Colored practical signage." },
+                { id: "desertsun", label: "Desert Sun", value: "lighting motivated by brutal desert sun, sand bounce, and dust-filtered sky glow", desc: "Harsh outdoor source." }
+            ]
+        },
+        lightDirection: {
+            title: "Light Direction",
+            type: "grid",
+            hasPreview: false,
+            options: [
+                { id: "left", label: "From Left", value: "key light falling from camera-left with gentle shadow falloff on the opposite side", desc: "Classic shaped side light." },
+                { id: "right", label: "From Right", value: "key light falling from camera-right with natural shadow falloff", desc: "Side light from the right." },
+                { id: "backlight", label: "Backlight", value: "motivated backlight outlining the subject with practical rim highlights", desc: "Separates subject from background." },
+                { id: "top", label: "Overhead", value: "overhead practical light with realistic downward shadow direction", desc: "Ceiling, street lamp, or hard top source." },
+                { id: "low", label: "Low Practical", value: "low practical light source shaping the face and foreground from below eye level", desc: "Dashboard, candle, fire, or floor-level practical." },
+                { id: "bounce", label: "Environmental Bounce", value: "soft environmental bounce light preserving realistic shadow direction", desc: "Natural reflected light." },
+                { id: "silhouetteedge", label: "Edge Silhouette", value: "bright background source creating a readable silhouette and restrained edge detail", desc: "Shape-first lighting." }
+            ]
+        },
+        exposure: {
+            title: "Exposure / Contrast",
+            type: "grid",
+            hasPreview: false,
+            options: [
+                { id: "natural", label: "Natural Exposure", value: "natural exposure with believable shadow falloff and preserved highlight detail", desc: "Grounded general exposure." },
+                { id: "underread", label: "Underexposed Readable", value: "underexposed but still readable, deep mood with natural shadow detail", desc: "Dark but not muddy or crushed." },
+                { id: "lifted", label: "Lifted Shadows", value: "lifted shadows, soft blacks, controlled contrast, no crushed black areas", desc: "Film-like shadow floor." },
+                { id: "softhigh", label: "Soft Highlights", value: "soft highlights with gentle rolloff, warm but not blown out, no pure white clipping", desc: "Prevents harsh AI highlights." },
+                { id: "flatcine", label: "Flat Cinematic", value: "flat but cinematic contrast, restrained color, preserved midtone detail", desc: "Pre-grade cinema capture feeling." },
+                { id: "harshread", label: "Harsh but Readable", value: "hard contrast from real light sources while retaining readable shadows and textured highlights", desc: "High contrast without fake HDR." }
+            ]
+        },
         palette: {
             title: "Color Palette",
             type: "grid",
@@ -703,6 +747,20 @@
                 { id: "highkey", label: "High-Key Grade", value: "high-key bright grade", desc: "Bright, open, soft contrast." }
             ]
         },
+        lookRecipe: {
+            title: "Cinematic Look Recipe",
+            type: "grid",
+            hasPreview: false,
+            options: [
+                { id: "spectre", label: "Spy Thriller", value: "restrained spy-thriller look, flat but cinematic live-action frame, muted amber-brown tones, warm practical lighting, lifted shadows, soft highlights, slightly muddy colors, expensive European night-thriller mood", desc: "Grounded Bond/Spectre-style restraint." },
+                { id: "matrix", label: "Matrix Cyber-Noir", value: "late-1990s cyber-noir look, muted green shadows, yellow-green midtones, desaturated skin, CRT glow, fluorescent practical light, grimy photochemical finish, paranoid surveillance atmosphere", desc: "Greenish coded sci-fi noir." },
+                { id: "johnwick", label: "John Wick Neo-Noir", value: "grounded neo-noir action look, deep blue shadows, magenta and cyan practical neon spill, red accents, rain-slick streets, elegant contrast, tactile reflections, rich but readable blacks", desc: "Stylized but photographic night action." },
+                { id: "dunkirk", label: "War Documentary", value: "large-format historical war-documentary realism, cold desaturated blue-grey palette, overcast daylight, smoke-filtered atmosphere, pale highlights, soft blacks, damp windblown texture", desc: "Restrained survival-war realism." },
+                { id: "dune", label: "Desert Sci-Fi", value: "restrained epic desert sci-fi look, sand beige, pale ochre, dusty gold, bone-white sky, monumental negative space, heat and dust diffusion, tactile real-world production design", desc: "Austere large-format desert scale." },
+                { id: "batman", label: "Urban Noir", value: "near-black rain-soaked urban noir look, deep charcoal blacks, sodium-orange haze, warm practical bloom, lifted shadow detail, muddy color, wet asphalt and glass reflections", desc: "Dark detective thriller atmosphere." },
+                { id: "madmax", label: "Wasteland Action", value: "grounded post-apocalyptic action look, scorched desert daylight, rusted metal, pale sand, dust-streaked lens texture, practical stunt energy, gritty live-action chaos", desc: "Hot dusty wasteland realism." }
+            ]
+        },
         texture: {
             title: "Texture & Post (Multi)",
             type: "multi",
@@ -717,6 +775,29 @@
                 { id: "vignette", label: "Vignette", value: "vignette", desc: "Darkening toward corners to focus the eye." },
                 { id: "gateweave", label: "Gate Weave", value: "subtle film gate weave", desc: "Small mechanical film-frame instability." },
                 { id: "lensflare", label: "Lens Flare", value: "controlled cinematic lens flare", desc: "Optical flare from bright sources." }
+            ]
+        },
+        realism: {
+            title: "Physical Realism (Multi)",
+            type: "multi",
+            hasPreview: false,
+            options: [
+                { id: "skin", label: "Skin Texture", value: "natural skin texture with visible pores, subtle imperfections, and relaxed expression", desc: "Avoids waxy beauty-filter faces." },
+                { id: "worn", label: "Worn Surfaces", value: "dust, scratches, rust, worn paint, and imperfect used surfaces", desc: "Makes objects feel handled and lived-in." },
+                { id: "reflections", label: "Real Reflections", value: "physically believable reflections on glass, metal, wet ground, and polished surfaces", desc: "Prevents impossible plastic reflections." },
+                { id: "haze", label: "Atmospheric Haze", value: "slight atmospheric haze, particulate air, smoke or mist softening distant detail", desc: "Adds real air between camera and subject." },
+                { id: "fabric", label: "Fabric / Leather", value: "tactile fabric, wool, leather, stitching, creases, and natural wear", desc: "Grounds wardrobe and props." },
+                { id: "wet", label: "Wet Surfaces", value: "rain, wet asphalt, water beads, damp hair, and realistic moisture behavior", desc: "For rain and night scenes." },
+                { id: "dust", label: "Dust / Sand", value: "dust, sand, ash, grime, and environmental particles interacting with light", desc: "For deserts, ruins, and industrial scenes." },
+                { id: "shadows", label: "Real Shadows", value: "shadows should follow the actual motivated light source and remain physically consistent", desc: "Stops painted-on fake lighting." }
+            ]
+        },
+        antiGloss: {
+            title: "Anti AI Gloss (Multi)",
+            type: "multi",
+            hasPreview: false,
+            options: [
+                { id: "enabled", label: "Anti AI Gloss", value: "glossy AI look, fake HDR, ultra-sharp digital image, overprocessed contrast, oversaturated colors, video game render, CGI look, Unreal Engine look, plastic reflections, waxy skin, beauty-filter face, overly smooth texture, corporate commercial lighting, crushed black shadows, pure white clipped highlights, perfect clean surfaces, fake lens flare, cartoon smoke, artificial bokeh, warped objects, melted shapes, unrealistic reflections, poster-like composition, AI-generated concept art", desc: "Adds a targeted negative list against common synthetic AI artifacts." }
             ]
         },
         style: {
@@ -809,9 +890,15 @@
         focal: "50mm",
         dof: 2,
         lighting: "volumetric",
+        lightSource: "window",
+        lightDirection: "bounce",
+        exposure: "underread",
         palette: "tealorange",
         grading: "kodak2383",
+        lookRecipe: "spectre",
         texture: [],
+        realism: ["skin", "reflections", "haze", "shadows"],
+        antiGloss: ["enabled"],
         style: ["photo", "cine"],
         artist: "wes",
         quality: "balanced",
@@ -1287,10 +1374,12 @@
         return cleanJoin([
             "You are a senior cinematic image-prompt writer for CinePrompt Studio.",
             "Return only one completed image prompt. Do not add an introduction, explanation, markdown, headings, or labels.",
-            "Transform the source into a richer, production-ready still-image prompt with stronger scene specificity, material details, atmospheric cues, cinematic composition, and visual hierarchy.",
-            "Preserve every explicit subject, action, composition, camera look, lens, lighting, palette, grade, art direction, texture, aspect ratio, visible text, and constraint from the source prompt.",
+            "Transform the source into a richer, production-ready still-image prompt by making physical cinematography decisions, not by adding vague quality adjectives.",
+            "Follow this framework when details are missing: camera identity and lens behavior; composition and framing; motivated light source and direction; exposure and contrast; palette and grade; physical subject/material realism; lens texture and camera imperfections; targeted negative constraints.",
+            "Preserve every explicit subject, action, composition, camera look, lens, motivated light source, lighting direction, exposure behavior, palette, grade, art direction, texture, aspect ratio, visible text, and constraint from the source prompt.",
             "Do not invent subjects, brand names, story beats, or readable text. Keep visible text exactly unchanged.",
-            "Expand vague phrases into concrete visual language, but keep the same intent and avoid contradicting selected settings.",
+            "Replace generic words like cinematic, realistic, 4K, HDR, beautiful, and highly detailed with concrete capture language such as underexposed but readable, lifted shadows, soft highlight rolloff, practical light sources, natural lens softness, fine grain, haze, imperfect surfaces, and physically believable reflections.",
+            "Avoid the clean AI gloss: do not make the image overly sharp, overlit, oversaturated, plasticky, waxy, game-rendered, or commercially perfect.",
             "Use one cohesive paragraph unless the source prompt clearly needs sentence separation.",
             `The target formatter is ${profile.label}. ${profile.note}`,
             ctx.visibleText ? `The exact visible text requirement is: ${ctx.textInstruction}.` : "The source prompt does not request visible text."
@@ -1341,7 +1430,7 @@
                         {
                             role: "user",
                             content: cleanJoin([
-                                `Enhancement instruction: ${cleanText(ollamaInstructionInput.value) || "Rewrite into a detailed cinematic still-image prompt while preserving all explicit requirements."}`,
+                                `Enhancement instruction: ${cleanText(ollamaInstructionInput.value) || "Rewrite into a detailed cinematic still-image prompt using motivated light, exposure, camera texture, material realism, and anti-AI-gloss constraints while preserving all explicit requirements."}`,
                                 `Target format: ${profile.label}.`,
                                 `Source prompt:\n${prompt}`
                             ], "\n\n")
@@ -1389,6 +1478,9 @@
         });
         const styleText = getMultiValues("style").map(o => o.value).join(", ");
         const textureText = getMultiValues("texture").map(o => o.value).join(", ");
+        const realismText = getMultiValues("realism").map(o => o.value).join(", ");
+        const antiGlossText = getMultiValues("antiGloss").map(o => o.value).join(", ");
+        const constraints = buildConstraintText(cleanJoin([negative, antiGlossText], ", "));
         return {
             subject,
             action,
@@ -1398,8 +1490,10 @@
             selected,
             styleText,
             textureText,
+            realismText,
+            antiGlossText,
             textInstruction: buildTextInstruction(visibleText),
-            constraints: buildConstraintText(negative)
+            constraints
         };
     }
 
@@ -1408,18 +1502,25 @@
         const subjectLine = s.framing.value ? `${s.framing.value} of ${ctx.subject}` : ctx.subject;
         const action = ctx.action;
         const camera = cleanJoin([s.camera.value, s.focal.value, s.dof.val, s.angle.value], ", ");
-        const look = cleanJoin([s.lighting.value, s.palette.value, s.grading.value], ", ");
-        const style = cleanJoin([ctx.styleText, s.artist.value, ctx.textureText, s.quality.value], ", ");
+        const lighting = cleanJoin([s.lighting.value, s.lightSource.value, s.lightDirection.value], ", ");
+        const color = cleanJoin([s.palette.value, s.grading.value], ", ");
+        const exposure = s.exposure.value;
+        const recipe = s.lookRecipe.value;
+        const style = cleanJoin([recipe, ctx.styleText, s.artist.value, ctx.textureText, s.quality.value], ", ");
+        const realism = cleanJoin([ctx.realismText], ", ");
         const ratio = s.ratio.value;
         const composition = cleanJoin([camera, ratio], ", ");
 
         return cleanJoin([
-            `High-end cinematic photography: ${subjectLine}.`,
+            `Grounded live-action cinematic still: ${subjectLine}.`,
             ctx.scene && `Scene: ${ctx.scene}.`,
             action && `Subject action and intent: ${action}.`,
-            camera && `Cinematography: ${camera}.`,
-            look && `Lighting and color: ${look}.`,
-            style && `Style: ${style}.`,
+            composition && `Camera, lens, and composition: ${composition}.`,
+            lighting && `Motivated lighting: ${lighting}; no unmotivated fake studio light unless explicitly requested by the scene.`,
+            exposure && `Exposure and contrast: ${exposure}.`,
+            color && `Color palette and grade: ${color}.`,
+            style && `Look and finish: ${style}.`,
+            realism && `Physical realism: ${realism}.`,
             ratio && `Compose for ${ratio}.`,
             ctx.textInstruction ? `Render visible text exactly as ${ctx.textInstruction}.` : "Do not add extra readable text.",
             ctx.constraints && `Avoid ${ctx.constraints}.`
@@ -1429,8 +1530,10 @@
     function renderRecipe(ctx, profile) {
         const chips = [
             ["Format", profile.label],
+            ["Recipe", ctx.selected.lookRecipe.label],
             ["Camera", ctx.selected.camera.label],
             ["Lens", ctx.selected.focal.label],
+            ["Exposure", ctx.selected.exposure.label],
             ["Grade", ctx.selected.grading.label],
             ["Action", ctx.action || "None"],
             ["Ratio", ctx.selected.ratio.label]
@@ -1448,6 +1551,10 @@
         if ((state.texture || []).includes("clean") && ["grain", "vhs", "burn", "gateweave"].some(id => state.texture.includes(id))) {
             warnings.push("Clean Digital conflicts with analog texture choices such as grain, VHS, burn, or gate weave.");
         }
+        if (ctx.selected.lightSource.id === "none" && ctx.selected.lighting.id !== "none") warnings.push("Lighting is selected but no motivated light source is selected. Realistic prompts usually name the source.");
+        if (ctx.selected.exposure.id === "none") warnings.push("No exposure behavior is selected. Underexposed-readable, lifted shadows, or soft highlights help reduce AI gloss.");
+        if (!ctx.realismText) warnings.push("No physical realism details are selected. Materials, reflections, skin, haze, or shadows help make the image feel photographed.");
+        if (!ctx.antiGlossText) warnings.push("Anti AI Gloss is disabled. Enable it when the output starts looking too synthetic.");
         if (ctx.visibleText && ctx.visibleText.length > 80) warnings.push("Long visible text is harder to render accurately. Short, quoted text blocks work better.");
         const warningHtml = warnings.length ? `<ul>${warnings.map(w => `<li>${escapeHtml(w)}</li>`).join("")}</ul>` : "";
         qaPanel.classList.toggle("warning", warnings.length > 0);
@@ -1463,6 +1570,7 @@
             scene_details: ctx.scene,
             visible_text: ctx.visibleText,
             negative_prompt: ctx.negative,
+            avoid_constraints: ctx.constraints,
             negative_handling: profile.negativeHandling,
             parameters: {
                 aspect_ratio: ctx.selected.ratio.label,
@@ -1472,10 +1580,16 @@
                 lens: ctx.selected.focal.label,
                 aperture: ctx.selected.dof.label,
                 lighting: ctx.selected.lighting.label,
+                motivated_light_source: ctx.selected.lightSource.label,
+                light_direction: ctx.selected.lightDirection.label,
+                exposure_contrast: ctx.selected.exposure.label,
                 palette: ctx.selected.palette.label,
                 grading: ctx.selected.grading.label,
+                cinematic_look_recipe: ctx.selected.lookRecipe.label,
                 style: ctx.styleText,
                 textures: ctx.textureText,
+                physical_realism: ctx.realismText,
+                anti_ai_gloss: ctx.selected.antiGloss.map(item => item.label).join(", "),
                 artist_or_director: ctx.selected.artist.label,
                 quality: ctx.selected.quality.label
             },
@@ -1543,18 +1657,20 @@
     }
 
     function randomize() {
-        const randomCats = ["ratio", "camera", "framing", "angle", "focal", "lighting", "palette", "grading", "artist", "quality"];
+        const randomCats = ["ratio", "camera", "framing", "angle", "focal", "lighting", "lightSource", "lightDirection", "exposure", "palette", "grading", "lookRecipe", "artist", "quality"];
         randomCats.forEach(key => {
             if (state.locks && state.locks[key]) return;
             state[key] = randomFrom(categories[key].options).id;
         });
         if (!(state.locks && state.locks.dof)) state.dof = categories.dof.options.findIndex(option => option.id === randomFrom(categories.dof.options).id);
-        ["texture", "style"].forEach(key => {
+        ["texture", "style", "realism"].forEach(key => {
             if (state.locks && state.locks[key]) return;
             state[key] = categories[key].options.filter(opt => opt.id !== "none" && Math.random() > 0.78).map(opt => opt.id);
             if (key === "texture" && state.texture.length === 0) state.texture.push("none");
             if (key === "style" && state.style.length === 0) state.style.push("photo");
+            if (key === "realism" && state.realism.length === 0) state.realism.push("shadows");
         });
+        if (!(state.locks && state.locks.antiGloss)) state.antiGloss = ["enabled"];
         if (!(state.locks && state.locks.subject)) {
             const subjects = ["A cyberpunk detective", "An ancient forest temple", "A race car on a neon track", "A cyborg geisha", "A lonely lighthouse", "A samurai in a field of flowers", "A spaceship landing on Mars", "A detective entering a neon motel", "A red desert research station"];
             subjectInput.value = randomFrom(subjects);
@@ -1567,10 +1683,15 @@
     }
 
     function rerollLook() {
-        ["camera", "focal", "lighting", "palette", "grading", "artist", "quality"].forEach(key => {
+        ["camera", "focal", "lighting", "lightSource", "lightDirection", "exposure", "palette", "grading", "lookRecipe", "artist", "quality"].forEach(key => {
             if (!(state.locks && state.locks[key])) state[key] = randomFrom(categories[key].options).id;
         });
         if (!(state.locks && state.locks.dof)) state.dof = categories.dof.options.findIndex(option => option.id === randomFrom(categories.dof.options).id);
+        if (!(state.locks && state.locks.realism)) {
+            state.realism = categories.realism.options.filter(opt => opt.id !== "none" && Math.random() > 0.64).map(opt => opt.id);
+            if (!state.realism.length) state.realism = ["shadows"];
+        }
+        if (!(state.locks && state.locks.antiGloss)) state.antiGloss = ["enabled"];
         updateUI();
     }
 

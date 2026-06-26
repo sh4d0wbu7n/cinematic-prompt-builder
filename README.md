@@ -11,7 +11,9 @@ The full local app supports optional Ollama-based prompt refinement. The public 
 ## Features
 
 - Unified model-agnostic image prompt output.
-- Camera-look, lens, framing, angle, lighting, palette, grade, texture, art-direction, and quality controls.
+- Camera-look, lens, framing, angle, motivated light source, light direction, exposure, palette, grade, physical realism, texture, art-direction, and quality controls.
+- Cinematic look recipes for grounded spy thriller, cyber-noir, neo-noir action, war documentary, desert sci-fi, urban noir, and wasteland action looks.
+- Optional Anti AI Gloss constraints targeting fake HDR, waxy skin, CGI/render artifacts, plastic reflections, oversaturation, and overprocessed contrast.
 - `None` bypasses for every builder setting.
 - Local preset storage, JSON export/import, prompt QA, and generated visual reference assets.
 - Optional local Ollama model selection and prompt enhancement in the local app only.
