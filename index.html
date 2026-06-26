@@ -1,0 +1,1923 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cinematic Prompt Builder by Yedp</title>
+    <link rel="icon" type="image/x-icon" href="favicon.png">
+    <style>
+        :root {
+            --bg-dark: #1e1e1e;
+            --bg-panel: #252526;
+            --bg-input: #333333;
+            --bg-hover: #3e3e42;
+            --text-main: #e0e0e0;
+            --text-muted: #858585;
+            --accent: #F5C518; /* Cinema Gold */
+            --accent-hover: #d4a017;
+            --border: #444444;
+            --radius: 6px;
+            --font-ui: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        * { box-sizing: border-box; }
+        
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: var(--font-ui);
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- Header --- */
+        header {
+            height: 50px;
+            background-color: #111;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+        header .brand { display: flex; align-items: center; }
+        header .brand span { color: var(--accent); margin-right: 8px; }
+        header .version { font-size: 0.75rem; color: #555; background: #222; padding: 2px 6px; border-radius: 4px; }
+
+        /* --- Layout --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* --- Sidebar (Left) --- */
+        .sidebar {
+            width: 400px;
+            min-width: 320px;
+            background-color: var(--bg-panel);
+            border-right: 1px solid var(--border);
+            overflow-y: auto;
+            padding: 30px; 
+            display: flex;
+            flex-direction: column;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 60px; 
+            position: relative;
+        }
+        
+        .control-group::after {
+            content: '';
+            position: absolute;
+            bottom: -30px;
+            left: 10%;
+            width: 80%;
+            height: 1px;
+            background: #333;
+        }
+        .control-group:last-child { margin-bottom: 0; }
+        .control-group:last-child::after { display: none; }
+
+        .label {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent); 
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px; 
+        }
+        .label-with-action { gap: 12px; }
+
+        /* --- Inputs & Buttons --- */
+        input[type="text"], textarea.input-field {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: var(--radius);
+            font-size: 0.95rem;
+            width: 100%;
+            font-family: var(--font-ui);
+        }
+        input[type="text"]:focus, textarea.input-field:focus {
+            border-color: var(--accent);
+            outline: none;
+        }
+        textarea.input-field {
+            resize: none;
+            min-height: 60px;
+        }
+
+        /* --- Mode Selector --- */
+        .mode-selector {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 5px;
+            background: #111;
+            padding: 4px;
+            border-radius: var(--radius);
+            margin-bottom: 20px;
+        }
+        .mode-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 8px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            cursor: pointer;
+            border-radius: 4px;
+            transition: 0.2s;
+            text-align: center;
+        }
+        .mode-btn.active {
+            background: var(--bg-input);
+            color: var(--accent);
+        }
+
+        /* --- Aspect Ratio Grid --- */
+        .ratio-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        .ratio-btn {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 10px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .ratio-btn:hover { background: var(--bg-hover); }
+        .ratio-btn.active {
+            border-color: var(--accent);
+            background: rgba(245, 197, 24, 0.1);
+        }
+        .ratio-icon {
+            border: 2px solid var(--text-muted);
+            border-radius: 2px;
+            transition: 0.2s;
+        }
+        .ratio-btn.active .ratio-icon { border-color: var(--accent); }
+        .ratio-label { font-size: 0.75rem; color: var(--text-muted); }
+
+        /* --- Custom Dropdown --- */
+        .custom-select-wrapper {
+            position: relative;
+            user-select: none;
+        }
+        .custom-select-trigger {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.95rem;
+        }
+        .custom-select-trigger:hover { background: var(--bg-hover); }
+        .custom-select-arrow {
+            width: 0; height: 0; 
+            border-left: 5px solid transparent; border-right: 5px solid transparent;
+            border-top: 6px solid var(--text-muted);
+            transition: 0.2s;
+        }
+        .custom-select-wrapper.open .custom-select-arrow { transform: rotate(180deg); border-top-color: var(--accent); }
+
+        .custom-options {
+            position: absolute;
+            top: 105%; left: 0; right: 0;
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            z-index: 100;
+            opacity: 0; visibility: hidden;
+            pointer-events: none;
+            transform: translateY(-10px);
+            transition: all 0.2s;
+            max-height: 300px;
+            overflow-y: auto;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5);
+        }
+        .custom-select-wrapper.open .custom-options { opacity: 1; visibility: visible; pointer-events: all; transform: translateY(0); }
+        .custom-option {
+            padding: 12px; cursor: pointer;
+            display: flex; flex-direction: column; gap: 4px;
+            border-bottom: 1px solid #444;
+        }
+        .custom-option:last-child { border-bottom: none; }
+        .custom-option:hover { background: var(--bg-hover); }
+        .custom-option.selected { background: rgba(245, 197, 24, 0.2); border-left: 3px solid var(--accent); }
+        .option-text h4 { margin: 0; font-size: 0.95rem; color: var(--text-main); }
+        .option-text p { margin: 0; font-size: 0.75rem; color: var(--text-muted); }
+
+        /* --- Range Slider --- */
+        .range-container { padding: 10px 0; display: flex; flex-direction: column; gap: 5px; }
+        input[type=range] { -webkit-appearance: none; width: 100%; background: transparent; }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none; height: 16px; width: 16px; border-radius: 50%;
+            background: var(--accent); cursor: pointer; margin-top: -6px;
+        }
+        input[type=range]::-webkit-slider-runnable-track { width: 100%; height: 4px; background: var(--border); border-radius: 2px; }
+        .range-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+        .range-value { font-size: 0.9rem; color: var(--accent); font-family: monospace; font-weight: bold; }
+        .slider-labels { display: flex; justify-content: space-between; margin-top: 5px; font-size: 0.75rem; color: var(--text-muted); }
+
+        /* --- Multi-Select Grid --- */
+        .multi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 8px; }
+        .grid-card {
+            background: var(--bg-input); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 8px; cursor: pointer; text-align: center; transition: 0.2s;
+            display: flex; align-items: center; justify-content: center; min-height: 40px;
+        }
+        .grid-card:hover { border-color: #666; }
+        .grid-card.active { border-color: var(--accent); background: rgba(245, 197, 24, 0.1); }
+        .grid-card-title { font-size: 0.8rem; }
+
+        /* --- Right Panel (Preview) --- */
+        .preview-panel {
+            flex: 1; padding: 20px; display: flex; flex-direction: column; gap: 20px;
+            background: #111; 
+            overflow-y: auto; /* FIXED: Changed from hidden to auto to allow scrolling on small screens */
+        }
+
+        .visual-preview-container {
+            flex: 1; /* Take available space */
+            width: 100%;
+            background: #0a0a0a; 
+            border: 1px solid var(--border); border-radius: var(--radius);
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            position: relative; overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #222 1px, transparent 1px);
+            background-size: 20px 20px; padding: 20px;
+            min-height: 300px; /* Ensure minimum height */
+        }
+
+        .aspect-box {
+            background: #222; border: 1px solid #444; position: relative;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.6);
+            overflow: hidden; 
+            transition: width 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), height 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+        
+        .aspect-box img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+        .preview-caption { color: var(--accent); font-size: 0.9rem; font-weight: 600; text-align: center; width: 100%; margin-top: 10px; }
+
+        /* Info Box */
+        .info-box {
+            background: rgba(245, 197, 24, 0.05); border-left: 4px solid var(--accent);
+            padding: 15px; border-radius: 4px; min-height: 80px; flex-shrink: 0;
+        }
+        .info-title { color: var(--accent); font-weight: bold; margin-bottom: 5px; display: block; font-size: 1rem;}
+        .info-text { font-size: 0.9rem; line-height: 1.5; color: #ccc; }
+
+        /* Output Areas */
+        .output-group { flex-shrink: 0; }
+        .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        textarea.output-box {
+            width: 100%; background: #1a1a1a; border: 1px solid var(--border);
+            color: #ddd; padding: 12px; border-radius: var(--radius);
+            font-family: monospace; resize: vertical; min-height: 80px; font-size: 0.9rem;
+        }
+        textarea.output-box:focus { border-color: var(--accent); outline: none; }
+        
+        .btn { padding: 6px 12px; border-radius: 4px; border: none; font-weight: 600; cursor: pointer; font-size: 0.8rem; transition: 0.2s; }
+        .btn-copy { background: #333; color: white; border: 1px solid #555; }
+        .btn-copy:hover { background: #444; }
+        .btn-primary { background: var(--accent); color: #111; }
+        .btn-primary:hover { background: var(--accent-hover); }
+        .btn-danger { background: #e74c3c; color: white; }
+        .btn-action { background: #444; color: white; }
+        .btn-small { padding: 5px 8px; font-size: 0.72rem; }
+        .lock-btn {
+            background: transparent;
+            border: 1px solid #555;
+            color: var(--text-muted);
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.7rem;
+            padding: 3px 7px;
+            text-transform: none;
+            letter-spacing: 0;
+        }
+        .lock-btn.active {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: rgba(245, 197, 24, 0.12);
+        }
+        select.input-field {
+            background: var(--bg-input);
+            border: 1px solid var(--border);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: var(--radius);
+            font-size: 0.9rem;
+            width: 100%;
+            font-family: var(--font-ui);
+        }
+        .preset-row { display: flex; gap: 8px; margin-bottom: 8px; }
+        .preset-row input { flex: 1; }
+        .preset-actions { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .recipe-panel {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        .recipe-chip {
+            border: 1px solid #3b3b3b;
+            background: #1a1a1a;
+            color: #ccc;
+            border-radius: 999px;
+            padding: 5px 9px;
+            font-size: 0.75rem;
+            white-space: nowrap;
+        }
+        .recipe-chip strong { color: var(--accent); font-weight: 700; }
+        .qa-panel, .model-note {
+            flex-shrink: 0;
+            background: #161616;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            color: #ccc;
+            font-size: 0.85rem;
+            line-height: 1.45;
+        }
+        .qa-panel.warning { border-color: rgba(245, 197, 24, 0.55); }
+        .qa-panel ul { margin: 8px 0 0 18px; padding: 0; }
+        .qa-panel li { margin-bottom: 4px; }
+        /* OLLAMA-START */
+        .ollama-panel {
+            flex-shrink: 0;
+            background: #161616;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+        }
+        .ollama-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+        .ollama-heading .label { margin: 0; }
+        .ollama-status {
+            color: var(--text-muted);
+            font-size: 0.75rem;
+            line-height: 1.2;
+            text-align: right;
+        }
+        .ollama-status.connected { color: #75c77a; }
+        .ollama-status.busy { color: var(--accent); }
+        .ollama-status.error { color: #ef8a80; }
+        .ollama-connection, .ollama-controls {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+        .ollama-panel .input-field, .ollama-panel textarea.input-field { min-height: 0; }
+        .ollama-instruction { min-height: 68px !important; margin-top: 8px; }
+        .ollama-output { color: #b7e7ff !important; }
+        /* OLLAMA-END */
+
+        /* Action Bar */
+        .action-bar { display: flex; gap: 10px; flex-wrap: wrap; margin-top: auto; border-top: 1px solid var(--border); padding-top: 20px; flex-shrink: 0; }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-dark); }
+        ::-webkit-scrollbar-thumb { background: #444; border-radius: 4px; }
+
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; overflow-y: auto; }
+            .sidebar { width: 100%; min-width: 0; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+            body { overflow-y: auto; height: auto; }
+        }
+        @media (max-width: 520px) {
+            header { padding: 0 12px; }
+            .sidebar { padding: 20px; }
+            .preset-row, .preset-actions { grid-template-columns: 1fr; flex-direction: column; }
+            .mode-selector { grid-template-columns: 1fr; }
+            /* OLLAMA-START */
+            .ollama-connection, .ollama-controls { grid-template-columns: 1fr; }
+            .ollama-status { text-align: left; }
+            /* OLLAMA-END */
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="brand">
+        <span>CINEMA</span> PROMPT BUILDER
+    </div>
+    <div class="version">v4.2 (Still Image + Ollama)</div>
+</header>
+
+<div class="app-container">
+    <aside class="sidebar" id="sidebar">
+        
+        <div class="label">Target Model</div>
+        <div class="mode-selector" id="modelSelector"></div>
+
+        <div class="control-group">
+            <div class="label label-with-action">Primary Subject <button id="lock-subject" class="lock-btn" onclick="toggleLock('subject')">Lock</button></div>
+            <input type="text" id="subjectInput" placeholder="A lone cyborg in a rainy alleyway..." value="A lone astronaut exploring a cave">
+        </div>
+
+        <div class="control-group">
+            <div class="label">Scene Details</div>
+            <textarea id="sceneInput" class="input-field" placeholder="Location, era, weather, props, wardrobe, mood..."></textarea>
+        </div>
+
+        <div class="control-group">
+            <div class="label">Visible Text</div>
+            <textarea id="visibleTextInput" class="input-field" placeholder="Exact text to render in the image, if any..."></textarea>
+        </div>
+
+        <div class="control-group">
+            <div class="label">Negative / Avoid</div>
+            <textarea id="negativeInput" class="input-field" placeholder="blurry, distorted, low quality, duplicate..."></textarea>
+        </div>
+
+        <div class="control-group">
+            <div class="label">Local Presets</div>
+            <div class="preset-row">
+                <input type="text" id="presetNameInput" placeholder="Preset name">
+                <button class="btn btn-primary btn-small" onclick="saveNamedPreset()">Save</button>
+            </div>
+            <div class="preset-row">
+                <select id="presetSelect" class="input-field"></select>
+            </div>
+            <div class="preset-actions">
+                <button class="btn btn-action btn-small" onclick="loadNamedPreset()">Load</button>
+                <button class="btn btn-action btn-small" onclick="deleteNamedPreset()">Delete</button>
+                <button class="btn btn-action btn-small" onclick="loadRecentPrompt()">Recent</button>
+            </div>
+        </div>
+
+        <div id="controlsContainer"></div>
+    </aside>
+
+    <main class="preview-panel">
+        
+        <div class="label">Visual Reference Monitor</div>
+        <div class="visual-preview-container" id="previewContainer">
+            <div id="visualBox" class="aspect-box">
+                <img id="previewImage" src="" alt="Reference Preview" onerror="handleImageError(this)">
+            </div>
+            
+            <div id="visualCaption" class="preview-caption">Hover for references</div>
+        </div>
+
+        <div id="infoBox" class="info-box">
+            <span id="infoTitle" class="info-title">Welcome</span>
+            <span id="infoText" class="info-text">Select options on the left. The reference monitor scales proportionally to fit the container. Formatting mode adjusts the prompt syntax.</span>
+        </div>
+
+        <div id="recipePanel" class="recipe-panel"></div>
+        <div id="qaPanel" class="qa-panel"></div>
+
+        <div class="output-group">
+            <div class="output-header">
+                <span class="label">Final Prompt String</span>
+                <button class="btn btn-copy" onclick="copyToClipboard('promptOutput')">Copy Text</button>
+            </div>
+            <textarea id="promptOutput" class="output-box" readonly></textarea>
+        </div>
+
+        <div class="output-group">
+            <div class="output-header">
+                <span class="label">Model Guidance</span>
+            </div>
+            <div id="modelNoteOutput" class="model-note"></div>
+        </div>
+
+        <!-- OLLAMA-START -->
+        <div class="ollama-panel" id="ollamaPanel">
+            <div class="ollama-heading">
+                <span class="label">Ollama Enhancement</span>
+                <span id="ollamaStatus" class="ollama-status">Checking local service...</span>
+            </div>
+            <div class="ollama-connection">
+                <input id="ollamaEndpoint" class="input-field" type="text" value="http://127.0.0.1:11434" aria-label="Ollama endpoint" title="Ollama endpoint">
+                <button class="btn btn-action" type="button" onclick="refreshOllamaModels()" title="Refresh locally installed Ollama models">Refresh</button>
+            </div>
+            <div class="ollama-controls">
+                <select id="ollamaModelSelect" class="input-field" aria-label="Ollama model" disabled>
+                    <option value="">No local model found</option>
+                </select>
+                <button id="ollamaEnhanceButton" class="btn btn-primary" type="button" onclick="enhanceWithOllama()" disabled>Enhance</button>
+            </div>
+            <textarea id="ollamaInstruction" class="input-field ollama-instruction" aria-label="Enhancement instruction">Improve the prompt's cinematic specificity and visual clarity. Preserve every explicit subject, composition, camera, color, exact text, and constraint. Return only the enhanced image prompt.</textarea>
+        </div>
+
+        <div id="ollamaOutputGroup" class="output-group" hidden>
+            <div class="output-header">
+                <span class="label">Ollama Enhanced Prompt</span>
+                <button class="btn btn-copy" onclick="copyToClipboard('ollamaOutput')">Copy Text</button>
+            </div>
+            <textarea id="ollamaOutput" class="output-box ollama-output" readonly></textarea>
+        </div>
+        <!-- OLLAMA-END -->
+
+        <div class="output-group">
+            <div class="output-header">
+                <span class="label">Configuration JSON</span>
+                <button class="btn btn-copy" onclick="copyToClipboard('jsonOutput')">Copy JSON</button>
+            </div>
+            <textarea id="jsonOutput" class="output-box" readonly style="color: #aaddff;"></textarea>
+        </div>
+
+        <div class="action-bar">
+            <button class="btn btn-primary" onclick="randomize()">Inspiration</button>
+            <button class="btn btn-action" onclick="rerollLook()">Reroll Look</button>
+            <button class="btn btn-action" onclick="saveTemplate()">Export File</button>
+            <button class="btn btn-action" onclick="loadTemplate()">Load File</button>
+            <button class="btn btn-danger" onclick="resetAll()">Reset</button>
+        </div>
+    </main>
+</div>
+
+<script>
+    const ASSET_PATH = "assets/";
+    const ASSET_EXT = ".jpg";
+    const STORAGE_KEYS = {
+        autosave: "cinematicPromptBuilder.autosave.v4",
+        presets: "cinematicPromptBuilder.presets.v4",
+        recent: "cinematicPromptBuilder.recentPrompts.v4"
+        // OLLAMA-START
+        ,
+        ollama: "cinematicPromptBuilder.ollama.v1"
+        // OLLAMA-END
+    };
+
+    const modelProfiles = [
+        {
+            id: "nanobanana",
+            label: "Nano Banana Pro",
+            desc: "Natural language, high-end prompt mode for cinematic stills and iterative image work.",
+            note: "Nano Banana Pro mode writes a fluent, instruction-style prompt. It keeps the scene readable, places exact visible text when supplied, and treats the negative box as visual constraints.",
+            negativeHandling: "Folded into the final prompt as avoid/cleanup guidance.",
+            settings: { promptLength: "medium", enhancer: "use conversational refinement", aspectRatio: "use selected ratio" }
+        },
+        {
+            id: "qwen2512",
+            label: "Qwen Image 2512",
+            desc: "Concise faithful mode based on the Qwen rewrite guide: minimal expansion, preserve intent, avoid invented details.",
+            note: "Qwen Image 2512 mode keeps the prompt concise and faithful. The local guide says not to over-expand clear prompts and not to inject negation words into the rewritten prompt, so negative terms stay in JSON.",
+            negativeHandling: "Stored separately in JSON; not inserted into the positive prompt.",
+            settings: { promptLength: "short-to-medium", textRule: "quote exact visible text", styleRule: "keep named styles once" }
+        },
+        {
+            id: "krea2",
+            label: "Krea 2",
+            desc: "Clean direct visual-description mode. The local Krea PDF is empty, so this uses a conservative generic profile.",
+            note: "Krea 2 mode uses a clean direct description with strong visual hierarchy. The provided Krea guide file is zero bytes, so this profile is intentionally conservative.",
+            negativeHandling: "Folded into a short avoid clause.",
+            settings: { promptLength: "medium", guideStatus: "local guide file is empty" }
+        },
+        {
+            id: "zimage",
+            label: "Z-Image Turbo",
+            desc: "Structured camera-style prompt. Turbo does not use a traditional negative prompt in the official workflow.",
+            note: "Z-Image Turbo mode follows the local guide: detailed camera-style prompts, explicit subject/action/lighting, and guidance_scale 0. Negative prompts are not formal inputs, so constraints are baked into the positive text.",
+            negativeHandling: "Official Turbo workflow ignores separate negative prompts; constraints are embedded.",
+            settings: { steps: "8-12", guidance_scale: 0, maxText: "512-1024 tokens when needed" }
+        },
+        {
+            id: "ernie",
+            label: "ERNIE Image",
+            desc: "Structured prompt mode: subject, details, style/medium, and technical parameters.",
+            note: "ERNIE Image mode uses the guide's four-part structure. Use the model enhancer for short drafts; turn it off for precise final prompts or exact text layouts.",
+            negativeHandling: "Folded into the positive prompt as explicit exclusions.",
+            settings: { turbo: "8 steps, guidance 1.0", standard: "50 steps, guidance 4.0", sweetSpot: "50-150 words" }
+        },
+        {
+            id: "boogu",
+            label: "Boogu Image",
+            desc: "Single-block English prompt mode with explicit text/no-text statements.",
+            note: "Boogu Image mode follows the local rewriter: one natural English block, rich visual details when useful, exact quoted text, and a statement when no recognizable text should appear.",
+            negativeHandling: "Converted into plain-language cleanup guidance.",
+            settings: { output: "single continuous block", textRule: "quote all visible text" }
+        },
+        {
+            id: "gptimage2",
+            label: "GPT Image 2",
+            desc: "Instruction-first prompt mode for precise scene composition and text placement.",
+            note: "GPT Image 2 mode writes a clear creation instruction with exact subject, composition, lighting, text, and constraints. The provided PDF is image-rendered, so this profile uses a practical instruction format.",
+            negativeHandling: "Included as constraints in the instruction.",
+            settings: { promptLength: "medium-to-detailed", textRule: "explicit quoted text and placement" }
+        }
+    ];
+
+    const categories = {
+        ratio: {
+            title: "Aspect Ratio",
+            type: "ratio",
+            options: [
+                { id: "16-9", label: "16:9", value: "16:9 landscape frame", desc: "Standard widescreen. Ideal for TV, YouTube, and cinematic stills.", w: 16, h: 9 },
+                { id: "9-16", label: "9:16", value: "9:16 vertical frame", desc: "Vertical. Perfect for TikTok, Reels, and mobile-first images.", w: 9, h: 16 },
+                { id: "1-1", label: "1:1", value: "1:1 square frame", desc: "Square. Classic social format.", w: 1, h: 1 },
+                { id: "4-3", label: "4:3", value: "4:3 frame", desc: "Standard definition. Retro TV and documentary feeling.", w: 4, h: 3 },
+                { id: "235-1", label: "2.35:1", value: "2.35:1 anamorphic widescreen frame", desc: "CinemaScope. Wide, theatrical, and composed for scale.", w: 2.35, h: 1 },
+                { id: "143-1", label: "1.43:1", value: "1.43:1 IMAX frame", desc: "IMAX-style vertical scale for monumental scenes.", w: 1.43, h: 1 }
+            ]
+        },
+        framing: {
+            title: "Framing / Shot Size",
+            type: "select",
+            options: [
+                { id: "ecu", label: "Extreme Close-Up", value: "extreme close-up", desc: "Focuses on a specific detail, intensifying emotion." },
+                { id: "cu", label: "Close-Up", value: "close-up", desc: "Head and shoulders. Focuses on facial expression." },
+                { id: "med", label: "Medium Shot", value: "medium shot", desc: "Waist up. Standard interaction shot." },
+                { id: "cowboy", label: "Cowboy Shot", value: "American shot", desc: "Mid-thigh up. Originates from Westerns to show gun holsters." },
+                { id: "full", label: "Full Body", value: "full body shot", desc: "Head to toe. Shows attire and stance." },
+                { id: "wide", label: "Wide Shot", value: "wide shot", desc: "Subject plus environment. Shows context." },
+                { id: "est", label: "Establishing Shot", value: "establishing shot", desc: "Very wide. Sets the scene and location." },
+                { id: "macro", label: "Macro", value: "macro photography", desc: "Microscopic detail. Insects, textures, eyes." },
+                { id: "tilt", label: "Tilt-Shift", value: "tilt-shift photography", desc: "Miniature effect with a selective focus band." },
+                { id: "split", label: "Split Diopter", value: "split diopter shot", desc: "Foreground and background both sharp." }
+            ]
+        },
+        angle: {
+            title: "Camera Angle",
+            type: "select",
+            options: [
+                { id: "eye", label: "Eye Level", value: "eye level angle", desc: "Neutral perspective. Connects directly with the subject." },
+                { id: "low", label: "Low Angle", value: "low angle shot", desc: "Looking up. Makes subject look powerful or dominant." },
+                { id: "high", label: "High Angle", value: "high angle shot", desc: "Looking down. Makes subject look vulnerable or small." },
+                { id: "worm", label: "Worm's Eye", value: "worm's eye view", desc: "From the floor looking up. Grandeur or strangeness." },
+                { id: "ground", label: "Ground Level", value: "ground level shot", desc: "Camera sits on the ground. Intimate texture." },
+                { id: "bird", label: "Bird's Eye / Overhead", value: "overhead bird's eye view", desc: "Directly overhead. Geometry and layout." },
+                { id: "ots", label: "Over-the-Shoulder", value: "over-the-shoulder shot", desc: "Dialogue or pursuit perspective." },
+                { id: "dutch", label: "Dutch Angle", value: "Dutch angle", desc: "Tilted horizon. Unease, tension, or disorientation." },
+                { id: "pov", label: "POV", value: "first-person POV", desc: "Seen through the eyes of a character." }
+            ]
+        },
+        camera: {
+            title: "Camera Model",
+            type: "select",
+            options: [
+                { id: "arri", label: "Arri Alexa LF", value: "shot on Arri Alexa LF", desc: "Industry standard digital cinema with high dynamic range." },
+                { id: "redkomodo", label: "RED Komodo", value: "shot on RED Komodo 6K", desc: "Compact cinema camera look with crisp digital detail and punchy color." },
+                { id: "canonff", label: "Canon Full Frame DSLR", value: "shot on a Canon full-frame DSLR", desc: "Natural full-frame still photography with warm Canon color and familiar DSLR texture." },
+                { id: "sonyalpha", label: "Sony Alpha", value: "shot on Sony Alpha full-frame mirrorless", desc: "Hybrid photo/video look, clean low light, sharp digital detail." },
+                { id: "badphone", label: "Bad Smartphone", value: "shot on a cheap old smartphone camera", desc: "Low dynamic range, smeared detail, harsh sharpening, tiny sensor noise." },
+                { id: "imax70", label: "IMAX 70mm Film", value: "shot on IMAX 70mm Film", desc: "Huge resolution and depth. Grand theatrical scale." },
+                { id: "panavision", label: "Panavision Millennium", value: "shot on Panavision Millennium DXL2", desc: "Warm skin tones and Hollywood cinema aesthetics." },
+                { id: "sony", label: "Sony Venice 2", value: "shot on Sony Venice 2", desc: "Modern digital cinema with strong low-light performance." },
+                { id: "iphone", label: "iPhone 15 Pro", value: "shot on iPhone 15 Pro", desc: "Sharp mobile video look with deep depth of field." },
+                { id: "polaroid", label: "Polaroid SX-70", value: "Polaroid SX-70 instant film", desc: "Soft, nostalgic, chemical borders and faded colors." },
+                { id: "gopro", label: "GoPro Hero", value: "shot on GoPro Hero", desc: "Wide, distorted action-camera feeling." }
+            ]
+        },
+        focal: {
+            title: "Focal Length",
+            type: "select",
+            options: [
+                { id: "14mm", label: "14mm (Ultra Wide)", value: "14mm lens", desc: "Distorted edges and vast scale." },
+                { id: "24mm", label: "24mm (Wide)", value: "24mm lens", desc: "Good for landscapes and interiors." },
+                { id: "35mm", label: "35mm (Classic)", value: "35mm lens", desc: "Storytelling field of view." },
+                { id: "50mm", label: "50mm (Standard)", value: "50mm lens", desc: "Natural perspective, little distortion." },
+                { id: "85mm", label: "85mm (Portrait)", value: "85mm lens", desc: "Flattering compression for faces." },
+                { id: "135mm", label: "135mm (Telephoto)", value: "135mm lens", desc: "Significant compression and subject isolation." },
+                { id: "200mm", label: "200mm (Super Tele)", value: "200mm lens", desc: "Heavy compression with huge backgrounds." }
+            ]
+        },
+        dof: {
+            title: "Aperture / Depth of Field",
+            type: "slider",
+            options: [
+                { id: "f12", val: "f/1.2", label: "f/1.2", desc: "Razor-thin focus. Dreamy bokeh." },
+                { id: "f18", val: "f/1.8", label: "f/1.8", desc: "Very shallow. Great for low light." },
+                { id: "f28", val: "f/2.8", label: "f/2.8", desc: "Professional zoom standard. Good separation." },
+                { id: "f4", val: "f/4.0", label: "f/4.0", desc: "Balanced separation and clarity." },
+                { id: "f56", val: "f/5.6", label: "f/5.6", desc: "Standard sharpness." },
+                { id: "f8", val: "f/8.0", label: "f/8.0", desc: "Landscape standard. Mostly in focus." },
+                { id: "f11", val: "f/11", label: "f/11", desc: "Deep focus." },
+                { id: "f16", val: "f/16", label: "f/16", desc: "Everything sharp. Sunstars appear." },
+                { id: "f22", val: "f/22", label: "f/22", desc: "Maximum depth. Risk of diffraction softness." }
+            ]
+        },
+        action: {
+            title: "Subject Action",
+            type: "select",
+            hasPreview: false,
+            options: [
+                { id: "still", label: "Still Pose", value: "holding a still, deliberate pose", desc: "A composed cinematic frame." },
+                { id: "walk", label: "Walking", value: "walking through the scene", desc: "Everyday motion and narrative movement." },
+                { id: "run", label: "Running", value: "running with visible urgency", desc: "Action and momentum." },
+                { id: "turn", label: "Turning", value: "turning toward the camera", desc: "A reveal or reaction beat." },
+                { id: "reach", label: "Reaching", value: "reaching toward an object just out of frame", desc: "Creates tension and intent." },
+                { id: "lookoff", label: "Looking Off-Frame", value: "looking off-frame with focused attention", desc: "Suggests a world beyond the frame." },
+                { id: "interact", label: "Interacting", value: "interacting naturally with the environment", desc: "Connects subject to setting." }
+            ]
+        },
+        lighting: {
+            title: "Lighting",
+            type: "select",
+            options: [
+                { id: "volumetric", label: "Volumetric / God Rays", value: "volumetric lighting", desc: "Light beams visible in air or fog." },
+                { id: "biolum", label: "Bioluminescence", value: "bioluminescent lighting", desc: "Glowing organic blue-green light." },
+                { id: "golden", label: "Golden Hour", value: "golden hour lighting", desc: "Warm, soft light just before sunset." },
+                { id: "blue", label: "Blue Hour", value: "blue hour lighting", desc: "Cold, melancholic twilight." },
+                { id: "noon", label: "Noon Sun", value: "harsh noon sunlight", desc: "Short shadows, high contrast, bright." },
+                { id: "overcast", label: "Overcast", value: "overcast soft lighting", desc: "Diffused and shadowless." },
+                { id: "studio", label: "Studio Key Light", value: "studio key lighting", desc: "Controlled professional artificial lighting." },
+                { id: "rembrandt", label: "Rembrandt", value: "Rembrandt lighting", desc: "Triangle of light on the cheek." },
+                { id: "candle", label: "Candlelight", value: "lit by candlelight", desc: "Warm, flickering, intimate low light." },
+                { id: "moon", label: "Moonlight", value: "moonlight", desc: "Cold silver-blue low light." },
+                { id: "sil", label: "Silhouette", value: "silhouette lighting", desc: "Dark subject against a bright background." },
+                { id: "neon", label: "Neon", value: "neon lighting", desc: "Vibrant artificial color and reflections." },
+                { id: "chiaroscuro", label: "Chiaroscuro", value: "chiaroscuro lighting", desc: "High contrast between light and shadow." }
+            ]
+        },
+        palette: {
+            title: "Color Palette",
+            type: "select",
+            options: [
+                { id: "tealorange", label: "Teal & Orange", value: "teal and orange palette", desc: "Cool shadows and warm skin tones." },
+                { id: "velvia", label: "Fujifilm Velvia", value: "Fujifilm Velvia color palette", desc: "High saturation, deep blacks, vivid nature colors." },
+                { id: "ektachrome", label: "Kodak Ektachrome", value: "Kodak Ektachrome color palette", desc: "Cooler tones, fine grain, distinct blues." },
+                { id: "techni", label: "Technicolor", value: "Technicolor palette", desc: "Hyper-saturated old Hollywood color." },
+                { id: "bw", label: "Black & White", value: "black and white palette", desc: "Timeless tone, texture, and light." },
+                { id: "kodak", label: "Kodak Portra 400", value: "Kodak Portra 400 palette", desc: "Natural skin tones and warm highlights." },
+                { id: "vivid", label: "Vivid / Saturated", value: "vivid saturated colors", desc: "Punchy and bright." },
+                { id: "muted", label: "Muted / Desaturated", value: "muted desaturated palette", desc: "Serious, restrained, realistic." },
+                { id: "warm", label: "Warm Tones", value: "warm color palette", desc: "Cozy, nostalgic, inviting." },
+                { id: "cool", label: "Cool Tones", value: "cool color palette", desc: "Clinical, detached, or sad." },
+                { id: "highcon", label: "High Contrast", value: "high contrast palette", desc: "Deep blacks and bright whites." },
+                { id: "mono", label: "Monochromatic", value: "monochromatic color scheme", desc: "Shades of a single color." },
+                { id: "neonpal", label: "Neon Palette", value: "neon color palette", desc: "Electric greens, pinks, and purples." },
+                { id: "sepia", label: "Sepia", value: "sepia palette", desc: "Antique, western, flashback feeling." },
+                { id: "pastel", label: "Pastel", value: "soft pastel palette", desc: "Gentle low-contrast color." },
+                { id: "earth", label: "Earth Tones", value: "earth-tone palette", desc: "Olive, ochre, clay, and warm neutral hues." },
+                { id: "jewel", label: "Jewel Tones", value: "jewel-tone palette", desc: "Emerald, sapphire, ruby, and amethyst richness." },
+                { id: "sodium", label: "Sodium Vapor", value: "sodium-vapor amber palette", desc: "Streetlight amber and urban night mood." }
+            ]
+        },
+        grading: {
+            title: "Color Grading",
+            type: "select",
+            hasPreview: false,
+            options: [
+                { id: "kodak2383", label: "Kodak 2383 Print", value: "Kodak 2383 film print grade", desc: "Classic print-film contrast and warm highlights." },
+                { id: "bleach", label: "Bleach Bypass", value: "bleach bypass grade", desc: "Silver-retention look: harsh contrast, muted saturation." },
+                { id: "daynight", label: "Day-for-Night", value: "day-for-night grade", desc: "Daylight treated as stylized moonlit night." },
+                { id: "rec709", label: "Clean Rec.709", value: "clean Rec.709 grade", desc: "Neutral broadcast-ready contrast and color." },
+                { id: "log", label: "Flat Log", value: "flat log-camera grade", desc: "Low contrast, desaturated acquisition look." },
+                { id: "aces", label: "ACES Filmic", value: "ACES filmic color pipeline", desc: "Controlled highlight rolloff and cinema color management." },
+                { id: "cross", label: "Cross Process", value: "cross-processed color grade", desc: "Shifted hues, crunchy contrast, experimental color." },
+                { id: "halation", label: "Halation Glow", value: "film halation around highlights", desc: "Warm red-orange bloom around bright edges." },
+                { id: "lowkey", label: "Low-Key Grade", value: "low-key grade with dense shadows", desc: "Dark, moody, shadow-forward grade." },
+                { id: "highkey", label: "High-Key Grade", value: "high-key bright grade", desc: "Bright, open, soft contrast." }
+            ]
+        },
+        texture: {
+            title: "Texture & Post (Multi)",
+            type: "multi",
+            options: [
+                { id: "clean", label: "Clean Digital", value: "clean digital noise-free finish", desc: "Pristine digital clarity." },
+                { id: "grain", label: "Film Grain", value: "heavy film grain", desc: "Organic silver-halide texture." },
+                { id: "burn", label: "Film Burn", value: "film burn artifacts", desc: "Light leaks and chemical edge distortions." },
+                { id: "vhs", label: "VHS", value: "VHS artifacts", desc: "Analog tracking errors and color bleeding." },
+                { id: "bloom", label: "Bloom", value: "bloom effect", desc: "Light spreading from bright edges." },
+                { id: "chromatic", label: "Chromatic Aberration", value: "chromatic aberration", desc: "Color fringing at high-contrast edges." },
+                { id: "motion", label: "Motion Blur", value: "motion blur", desc: "Kinetic energy captured through longer exposure." },
+                { id: "vignette", label: "Vignette", value: "vignette", desc: "Darkening toward corners to focus the eye." },
+                { id: "gateweave", label: "Gate Weave", value: "subtle film gate weave", desc: "Small mechanical film-frame instability." },
+                { id: "lensflare", label: "Lens Flare", value: "controlled cinematic lens flare", desc: "Optical flare from bright sources." }
+            ]
+        },
+        style: {
+            title: "Art Style (Multi)",
+            type: "multi",
+            options: [
+                { id: "photo", label: "Photorealistic", value: "photorealistic", desc: "Mimics real photography." },
+                { id: "cine", label: "Cinematic", value: "cinematic composition", desc: "Movie-like mood, lighting, and staging." },
+                { id: "3d", label: "3D Render", value: "Unreal Engine 5 render, 3D", desc: "Modern real-time computer graphics." },
+                { id: "clay", label: "Claymation", value: "claymation style", desc: "Tactile stop-motion clay feeling." },
+                { id: "water", label: "Watercolor", value: "watercolor painting", desc: "Soft edges and bleeding pigment." },
+                { id: "cyber", label: "Cyberpunk", value: "Cyberpunk aesthetic", desc: "High tech, neon, rain, urban futurism." },
+                { id: "steam", label: "Steampunk", value: "Steampunk aesthetic", desc: "Victorian industrial brass and gears." },
+                { id: "diner", label: "1950s Diner", value: "1950s diner aesthetic", desc: "Chrome, neon, retro Americana." },
+                { id: "atom", label: "Atompunk", value: "atompunk aesthetic", desc: "1950s retro-futurism and Googie optimism." },
+                { id: "vapor", label: "Vaporwave", value: "vaporwave aesthetic", desc: "Retro-futuristic dreamscape colors." },
+                { id: "goth", label: "Gothic", value: "Gothic aesthetic", desc: "Dark, ornate, mysterious mood." },
+                { id: "min", label: "Minimalist", value: "minimalist style", desc: "Essential shapes, colors, and concepts." },
+                { id: "retro80", label: "Retro 80s", value: "1980s retro style", desc: "Saturated color and CRT glow." },
+                { id: "docu", label: "Gritty Documentary", value: "gritty documentary footage", desc: "Raw, handheld realism." },
+                { id: "ghibli", label: "Studio Ghibli", value: "Studio Ghibli style", desc: "Lush hand-painted animated charm." },
+                { id: "oil", label: "Oil Painting", value: "oil painting texture", desc: "Thick brushstrokes and rich pigments." },
+                { id: "noir", label: "Film Noir", value: "film noir style", desc: "High-contrast cynical urban atmosphere." }
+            ]
+        },
+        artist: {
+            title: "Artist / Director",
+            type: "select",
+            options: [
+                { id: "wes", label: "Wes Anderson", value: "directed by Wes Anderson", desc: "Symmetry, pastel colors, whimsical storybook staging." },
+                { id: "ridley", label: "Ridley Scott", value: "directed by Ridley Scott", desc: "Atmospheric scale, high detail, sci-fi noir." },
+                { id: "nolan", label: "Christopher Nolan", value: "directed by Christopher Nolan", desc: "Grand scale, practical effects, cool color palette." },
+                { id: "hopper", label: "Edward Hopper", value: "art by Edward Hopper", desc: "Dramatic shadows, urban isolation, stillness." },
+                { id: "fraser", label: "Greig Fraser", value: "cinematography by Greig Fraser", desc: "Moody, soft, dark-focused digital." },
+                { id: "lubezki", label: "Emmanuel Lubezki", value: "cinematography by Emmanuel Lubezki", desc: "Natural light and immersive long takes." },
+                { id: "hoyte", label: "Hoyte van Hoytema", value: "cinematography by Hoyte van Hoytema", desc: "IMAX scale, tactile texture, shallow depth." },
+                { id: "fincher", label: "David Fincher", value: "directed by David Fincher", desc: "Precision, green-yellow tint, low-light digital clarity." },
+                { id: "burton", label: "Tim Burton", value: "directed by Tim Burton", desc: "Gothic, quirky dark fantasy." },
+                { id: "spielberg", label: "Steven Spielberg", value: "directed by Steven Spielberg", desc: "Wonder, backlighting, iconic silhouettes." },
+                { id: "denis", label: "Denis Villeneuve", value: "directed by Denis Villeneuve", desc: "Brutalist scale and heavy atmosphere." },
+                { id: "wong", label: "Wong Kar-wai", value: "directed by Wong Kar-wai", desc: "Saturated neon, motion blur, urban longing." },
+                { id: "mead", label: "Syd Mead", value: "art by Syd Mead", desc: "Industrial futurism and functional high-tech design." },
+                { id: "miyazaki", label: "Hayao Miyazaki", value: "art by Hayao Miyazaki", desc: "Lush nature and intricate flying machines." },
+                { id: "tarantino", label: "Quentin Tarantino", value: "directed by Quentin Tarantino", desc: "Low angles, vibrant colors, exploitation-film style." },
+                { id: "giger", label: "H.R. Giger", value: "art by H.R. Giger", desc: "Biomechanical nightmare texture and monochrome darkness." }
+            ]
+        },
+        quality: {
+            title: "Output Quality",
+            type: "select",
+            hasPreview: false,
+            options: [
+                { id: "balanced", label: "Balanced", value: "high resolution, sharp focus, clean composition", desc: "General-purpose quality phrase." },
+                { id: "final", label: "Final Render", value: "final production-quality image, detailed textures, polished lighting", desc: "More detail for finished output." },
+                { id: "text", label: "Text Accurate", value: "crisp typography, clear readable lettering, precise layout", desc: "Prioritizes visible text clarity." },
+                { id: "draft", label: "Fast Draft", value: "clear draft image, simple composition, readable forms", desc: "Shorter prompt for fast iteration." }
+            ]
+        }
+    };
+
+    function addBypassOptions() {
+        Object.entries(categories).forEach(([key, category]) => {
+            if (category.options.some(option => option.id === "none")) return;
+            const noneOption = {
+                id: "none",
+                label: "None",
+                value: "",
+                desc: `Do not add ${category.title.toLowerCase()} guidance to the prompt.`
+            };
+            if (category.type === "ratio") {
+                noneOption.w = 16;
+                noneOption.h = 9;
+            }
+            if (category.type === "slider") {
+                noneOption.val = "";
+                category.options.push(noneOption);
+            } else {
+                category.options.unshift(noneOption);
+            }
+        });
+    }
+
+    addBypassOptions();
+
+    const defaultState = () => ({
+        model: "nanobanana",
+        ratio: "16-9",
+        camera: "arri",
+        framing: "wide",
+        angle: "eye",
+        focal: "50mm",
+        dof: 2,
+        action: "still",
+        lighting: "volumetric",
+        palette: "tealorange",
+        grading: "kodak2383",
+        texture: [],
+        style: ["photo", "cine"],
+        artist: "wes",
+        quality: "balanced",
+        locks: {}
+    });
+
+    let state = defaultState();
+    let initialized = false;
+    // OLLAMA-START
+    let ollamaRequestInFlight = false;
+    // OLLAMA-END
+
+    const controlsContainer = document.getElementById("controlsContainer");
+    const modelSelector = document.getElementById("modelSelector");
+    const visualBox = document.getElementById("visualBox");
+    const previewImage = document.getElementById("previewImage");
+    const visualCaption = document.getElementById("visualCaption");
+    const infoTitle = document.getElementById("infoTitle");
+    const infoText = document.getElementById("infoText");
+    const promptOutput = document.getElementById("promptOutput");
+    const jsonOutput = document.getElementById("jsonOutput");
+    const modelNoteOutput = document.getElementById("modelNoteOutput");
+    const qaPanel = document.getElementById("qaPanel");
+    const recipePanel = document.getElementById("recipePanel");
+    const subjectInput = document.getElementById("subjectInput");
+    const sceneInput = document.getElementById("sceneInput");
+    const visibleTextInput = document.getElementById("visibleTextInput");
+    const negativeInput = document.getElementById("negativeInput");
+    const presetNameInput = document.getElementById("presetNameInput");
+    const presetSelect = document.getElementById("presetSelect");
+    const previewContainer = document.getElementById("previewContainer");
+    // OLLAMA-START
+    const ollamaEndpointInput = document.getElementById("ollamaEndpoint");
+    const ollamaModelSelect = document.getElementById("ollamaModelSelect");
+    const ollamaInstructionInput = document.getElementById("ollamaInstruction");
+    const ollamaEnhanceButton = document.getElementById("ollamaEnhanceButton");
+    const ollamaStatus = document.getElementById("ollamaStatus");
+    const ollamaOutput = document.getElementById("ollamaOutput");
+    const ollamaOutputGroup = document.getElementById("ollamaOutputGroup");
+    // OLLAMA-END
+
+    function init() {
+        loadAutosave();
+        renderModelSelector();
+        renderControls();
+        renderPresetList();
+        updateUI();
+        setPreview(categories.camera, state.camera);
+        [subjectInput, sceneInput, visibleTextInput, negativeInput].forEach(input => {
+            input.addEventListener("input", updatePrompt);
+        });
+        window.addEventListener("resize", updateUI);
+        window.addEventListener("click", closeOpenSelects);
+        // OLLAMA-START
+        initOllama();
+        // OLLAMA-END
+        initialized = true;
+        updatePrompt();
+    }
+
+    function renderModelSelector() {
+        modelSelector.innerHTML = "";
+        modelProfiles.forEach(model => {
+            const button = document.createElement("button");
+            button.className = "mode-btn";
+            button.dataset.model = model.id;
+            button.textContent = model.label;
+            button.onclick = () => setModel(model.id);
+            button.onmouseenter = () => showInfo(model.label, model.desc);
+            modelSelector.appendChild(button);
+        });
+    }
+
+    function setModel(modelId) {
+        state.model = modelProfiles.some(m => m.id === modelId) ? modelId : "nanobanana";
+        updateUI();
+    }
+
+    function setMode(mode) {
+        setModel(mode);
+    }
+
+    function renderControls() {
+        controlsContainer.innerHTML = "";
+        Object.keys(categories).forEach(key => {
+            const cat = categories[key];
+            const group = document.createElement("div");
+            group.className = "control-group";
+
+            const label = document.createElement("div");
+            label.className = "label label-with-action";
+            const labelText = document.createElement("span");
+            labelText.textContent = cat.title;
+            const lock = document.createElement("button");
+            lock.className = "lock-btn";
+            lock.id = `lock-${key}`;
+            lock.textContent = "Lock";
+            lock.onclick = () => toggleLock(key);
+            label.appendChild(labelText);
+            label.appendChild(lock);
+            group.appendChild(label);
+
+            if (cat.type === "ratio") {
+                group.appendChild(renderRatioControl(cat));
+            } else if (cat.type === "select") {
+                group.appendChild(renderSelectControl(key, cat));
+            } else if (cat.type === "slider") {
+                group.appendChild(renderSliderControl(key, cat));
+            } else if (cat.type === "multi") {
+                group.appendChild(renderMultiControl(key, cat));
+            }
+            controlsContainer.appendChild(group);
+        });
+    }
+
+    function renderRatioControl(cat) {
+        const grid = document.createElement("div");
+        grid.className = "ratio-grid";
+        cat.options.forEach(opt => {
+            const btn = document.createElement("div");
+            btn.className = "ratio-btn";
+            btn.dataset.id = opt.id;
+            btn.onclick = () => setRatio(opt.id);
+            btn.onmouseenter = () => showInfo(opt.label, opt.desc);
+            const icon = document.createElement("div");
+            icon.className = "ratio-icon";
+            const scale = 25 / Math.max(opt.w, opt.h);
+            icon.style.width = `${opt.w * scale}px`;
+            icon.style.height = `${opt.h * scale}px`;
+            const txt = document.createElement("span");
+            txt.className = "ratio-label";
+            txt.textContent = opt.label;
+            btn.appendChild(icon);
+            btn.appendChild(txt);
+            grid.appendChild(btn);
+        });
+        return grid;
+    }
+
+    function renderSelectControl(key, cat) {
+        const wrapper = document.createElement("div");
+        wrapper.className = "custom-select-wrapper";
+        wrapper.id = `select-${key}`;
+        const trigger = document.createElement("div");
+        trigger.className = "custom-select-trigger";
+        trigger.onclick = e => toggleSelect(key, e);
+        trigger.innerHTML = `<span id="txt-${key}">Select...</span> <div class="custom-select-arrow"></div>`;
+        const options = document.createElement("div");
+        options.className = "custom-options";
+        cat.options.forEach(opt => {
+            const option = document.createElement("div");
+            option.className = "custom-option";
+            option.dataset.value = opt.id;
+            option.onclick = () => {
+                selectOption(key, opt.id);
+                setPreview(cat, opt.id);
+            };
+            option.onmouseenter = () => setPreview(cat, opt.id);
+            option.innerHTML = `<div class="option-text"><h4>${escapeHtml(opt.label)}</h4><p>${escapeHtml(opt.desc)}</p></div>`;
+            options.appendChild(option);
+        });
+        wrapper.appendChild(trigger);
+        wrapper.appendChild(options);
+        return wrapper;
+    }
+
+    function renderSliderControl(key, cat) {
+        const rangeContainer = document.createElement("div");
+        rangeContainer.className = "range-container";
+        const header = document.createElement("div");
+        header.className = "range-header";
+        const valDisplay = document.createElement("div");
+        valDisplay.className = "range-value";
+        valDisplay.id = `${key}Value`;
+        valDisplay.textContent = cat.options[state[key]].label;
+        header.appendChild(valDisplay);
+        const range = document.createElement("input");
+        range.type = "range";
+        range.min = 0;
+        range.max = cat.options.length - 1;
+        range.value = state[key];
+        range.id = `${key}Slider`;
+        range.oninput = e => {
+            state[key] = parseInt(e.target.value, 10);
+            const currentOpt = cat.options[state[key]];
+            document.getElementById(`${key}Value`).textContent = currentOpt.label;
+            updatePrompt();
+            setPreview(cat, currentOpt.id);
+        };
+        const indicatorDiv = document.createElement("div");
+        indicatorDiv.className = "slider-labels";
+        indicatorDiv.innerHTML = `<span>Shallow / Bokeh</span> <span>Deep / None</span>`;
+        rangeContainer.appendChild(header);
+        rangeContainer.appendChild(range);
+        rangeContainer.appendChild(indicatorDiv);
+        return rangeContainer;
+    }
+
+    function renderMultiControl(key, cat) {
+        const grid = document.createElement("div");
+        grid.className = "multi-grid";
+        cat.options.forEach(opt => {
+            const card = document.createElement("div");
+            card.className = "grid-card";
+            card.id = `multi-${key}-${opt.id}`;
+            card.onclick = () => {
+                toggleMulti(key, opt.id);
+                setPreview(cat, opt.id);
+            };
+            card.onmouseenter = () => setPreview(cat, opt.id);
+            const title = document.createElement("div");
+            title.className = "grid-card-title";
+            title.textContent = opt.label;
+            card.appendChild(title);
+            grid.appendChild(card);
+        });
+        return grid;
+    }
+
+    function closeOpenSelects(e) {
+        document.querySelectorAll(".custom-select-wrapper").forEach(select => {
+            if (!select.contains(e.target)) select.classList.remove("open");
+        });
+    }
+
+    function setPreview(categoryObj, id) {
+        const opt = categoryObj.options.find(o => o.id === id);
+        if (!opt) return;
+        if (opt.id === "none") {
+            visualCaption.textContent = `${categoryObj.title}: None`;
+            showInfo("None", opt.desc);
+            return;
+        }
+        if (categoryObj.type === "ratio" || categoryObj.hasPreview === false) {
+            visualCaption.textContent = `${categoryObj.title}: ${opt.label}`;
+            showInfo(opt.label, opt.desc);
+            return;
+        }
+        const catKey = Object.keys(categories).find(key => categories[key] === categoryObj);
+        const fileName = `${catKey}_${id}${ASSET_EXT}`;
+        previewImage.dataset.expectedName = fileName;
+        previewImage.src = ASSET_PATH + fileName;
+        previewImage.style.display = "block";
+        visualCaption.textContent = `Preview: ${opt.label}`;
+        showInfo(opt.label, opt.desc);
+    }
+
+    function handleImageError(img) {
+        const expected = img.dataset.expectedName || "image";
+        const safe = escapeHtml(expected);
+        const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="800" height="500"><rect width="800" height="500" fill="#222"/><rect x="24" y="24" width="752" height="452" fill="none" stroke="#555" stroke-width="2"/><text x="400" y="235" fill="#F5C518" font-family="Arial" font-size="30" text-anchor="middle">Missing Preview</text><text x="400" y="278" fill="#aaa" font-family="Arial" font-size="22" text-anchor="middle">${safe}</text></svg>`;
+        img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg)}`;
+    }
+
+    function showInfo(title, text) {
+        infoTitle.textContent = title;
+        infoText.textContent = text;
+    }
+
+    function setRatio(id) {
+        state.ratio = id;
+        const opt = categories.ratio.options.find(o => o.id === id);
+        if (opt) showInfo(opt.label, opt.desc);
+        updateUI();
+    }
+
+    function toggleSelect(key, e) {
+        e.stopPropagation();
+        const wrapper = document.getElementById(`select-${key}`);
+        const isOpen = wrapper.classList.contains("open");
+        document.querySelectorAll(".custom-select-wrapper").forEach(w => w.classList.remove("open"));
+        if (!isOpen) wrapper.classList.add("open");
+    }
+
+    function selectOption(key, id) {
+        state[key] = id;
+        updateUI();
+        document.getElementById(`select-${key}`).classList.remove("open");
+    }
+
+    function toggleMulti(key, id) {
+        const arr = Array.isArray(state[key]) ? state[key] : [];
+        if (id === "none") {
+            state[key] = ["none"];
+        } else {
+            const active = arr.filter(i => i !== "none");
+            state[key] = active.includes(id) ? active.filter(i => i !== id) : [...active, id];
+        }
+        updateUI();
+    }
+
+    function toggleLock(key) {
+        state.locks = state.locks || {};
+        state.locks[key] = !state.locks[key];
+        updateUI();
+    }
+
+    function updateUI() {
+        document.querySelectorAll(".mode-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.model === state.model);
+        });
+        document.querySelectorAll(".ratio-btn").forEach(btn => {
+            btn.classList.toggle("active", btn.dataset.id === state.ratio);
+        });
+
+        const ratioObj = getOption("ratio", state.ratio);
+        const rect = previewContainer.getBoundingClientRect();
+        const containerW = Math.max(rect.width - 40, 120);
+        const containerH = Math.max(rect.height - 40, 120);
+        const targetRatio = ratioObj.w / ratioObj.h;
+        let w, h;
+        if (containerW / containerH > targetRatio) {
+            h = containerH;
+            w = h * targetRatio;
+        } else {
+            w = containerW;
+            h = w / targetRatio;
+        }
+        visualBox.style.width = `${w}px`;
+        visualBox.style.height = `${h}px`;
+
+        Object.keys(categories).forEach(key => {
+            const cat = categories[key];
+            const lock = document.getElementById(`lock-${key}`);
+            if (lock) {
+                const locked = Boolean(state.locks && state.locks[key]);
+                lock.classList.toggle("active", locked);
+                lock.textContent = locked ? "Locked" : "Lock";
+            }
+            if (cat.type === "select") {
+                const opt = getOption(key, state[key]);
+                const txt = document.getElementById(`txt-${key}`);
+                if (txt) txt.textContent = opt.label;
+                document.querySelectorAll(`#select-${key} .custom-option`).forEach(el => {
+                    el.classList.toggle("selected", el.dataset.value === state[key]);
+                });
+            } else if (cat.type === "multi") {
+                cat.options.forEach(opt => {
+                    const el = document.getElementById(`multi-${key}-${opt.id}`);
+                    if (el) el.classList.toggle("active", Array.isArray(state[key]) && state[key].includes(opt.id));
+                });
+            } else if (cat.type === "slider") {
+                const slider = document.getElementById(`${key}Slider`);
+                const value = document.getElementById(`${key}Value`);
+                if (slider) slider.value = state[key];
+                if (value) value.textContent = cat.options[state[key]].label;
+            }
+        });
+
+        const subjectLock = document.getElementById("lock-subject");
+        if (subjectLock) {
+            const locked = Boolean(state.locks && state.locks.subject);
+            subjectLock.classList.toggle("active", locked);
+            subjectLock.textContent = locked ? "Locked" : "Lock";
+        }
+
+        updatePrompt();
+    }
+
+    function updatePrompt() {
+        const ctx = buildContext();
+        const profile = getModelProfile();
+        const finalPrompt = buildPromptForModel(ctx, profile);
+        promptOutput.value = finalPrompt;
+        modelNoteOutput.textContent = profile.note;
+        renderRecipe(ctx, profile);
+        renderQualityPanel(finalPrompt, ctx, profile);
+        jsonOutput.value = JSON.stringify(buildJsonOutput(ctx, profile, finalPrompt), null, 2);
+        if (initialized) saveAutosave();
+    }
+
+    // OLLAMA-START
+    function initOllama() {
+        const saved = readStorage(STORAGE_KEYS.ollama, {});
+        if (saved.endpoint) ollamaEndpointInput.value = saved.endpoint;
+        if (saved.instruction) ollamaInstructionInput.value = saved.instruction;
+        ollamaEndpointInput.addEventListener("change", () => {
+            saveOllamaSettings();
+            setOllamaStatus("Endpoint changed. Refresh models.");
+            ollamaModelSelect.disabled = true;
+            ollamaEnhanceButton.disabled = true;
+        });
+        ollamaInstructionInput.addEventListener("change", saveOllamaSettings);
+        ollamaModelSelect.addEventListener("change", saveOllamaSettings);
+        if (window.location.protocol === "file:") {
+            setOllamaStatus("Open through localhost:8787 to use Ollama.", "error");
+            return;
+        }
+        refreshOllamaModels(true);
+    }
+
+    function getOllamaEndpoint() {
+        const endpoint = cleanText(ollamaEndpointInput.value).replace(/\/+$/, "");
+        const parsed = new URL(endpoint);
+        if (!/^https?:$/.test(parsed.protocol)) throw new Error("Use an http or https Ollama endpoint.");
+        return endpoint;
+    }
+
+    function saveOllamaSettings() {
+        writeStorage(STORAGE_KEYS.ollama, {
+            endpoint: cleanText(ollamaEndpointInput.value),
+            model: ollamaModelSelect.value,
+            instruction: ollamaInstructionInput.value
+        });
+    }
+
+    function setOllamaStatus(message, status = "") {
+        ollamaStatus.textContent = message;
+        ollamaStatus.className = `ollama-status ${status}`.trim();
+    }
+
+    async function refreshOllamaModels(silent = false) {
+        let endpoint;
+        try {
+            endpoint = getOllamaEndpoint();
+        } catch (err) {
+            setOllamaStatus(err.message, "error");
+            ollamaModelSelect.disabled = true;
+            ollamaEnhanceButton.disabled = true;
+            return;
+        }
+
+        const saved = readStorage(STORAGE_KEYS.ollama, {});
+        const previouslySelected = ollamaModelSelect.value || saved.model;
+        setOllamaStatus("Checking local models...", "busy");
+        ollamaModelSelect.disabled = true;
+        ollamaEnhanceButton.disabled = true;
+        try {
+            const response = await fetch(`${endpoint}/api/tags`, { headers: { Accept: "application/json" } });
+            if (!response.ok) throw new Error(`Ollama responded with ${response.status}.`);
+            const payload = await response.json();
+            const models = Array.isArray(payload.models) ? payload.models : [];
+            if (!models.length) throw new Error("No local Ollama models are installed.");
+
+            ollamaModelSelect.innerHTML = "";
+            models.forEach(model => {
+                const option = document.createElement("option");
+                option.value = model.name;
+                option.textContent = model.name;
+                ollamaModelSelect.appendChild(option);
+            });
+            const selected = models.some(model => model.name === previouslySelected) ? previouslySelected : models[0].name;
+            ollamaModelSelect.value = selected;
+            ollamaModelSelect.disabled = false;
+            ollamaEnhanceButton.disabled = false;
+            saveOllamaSettings();
+            setOllamaStatus(`${models.length} local model${models.length === 1 ? "" : "s"} ready.`, "connected");
+            if (!silent) showInfo("Ollama Ready", `${selected} is selected for local prompt enhancement.`);
+        } catch (err) {
+            ollamaModelSelect.innerHTML = '<option value="">No local model found</option>';
+            ollamaModelSelect.disabled = true;
+            ollamaEnhanceButton.disabled = true;
+            const message = err instanceof TypeError
+                ? "Cannot reach Ollama. Check the service and this page's CORS access."
+                : err.message;
+            setOllamaStatus(message, "error");
+            if (!silent) showInfo("Ollama Unavailable", message);
+        }
+    }
+
+    function buildOllamaSystemPrompt(ctx, profile) {
+        const qwenRule = profile.id === "qwen2512"
+            ? "Keep the result concise and do not introduce negative-prompt phrasing."
+            : "Keep any avoid constraints precise and compatible with the source prompt.";
+        return cleanJoin([
+            "You are a precise image-prompt editor for a cinematic prompt builder.",
+            "Return only one completed image prompt. Do not add an introduction, explanation, markdown, headings, or labels.",
+            "Preserve every explicit subject, composition, camera, lens, lighting, palette, grade, art direction, texture, aspect ratio, visible text, and constraint from the source prompt.",
+            "Do not invent subjects, brand names, story beats, or readable text. Keep visible text exactly unchanged.",
+            qwenRule,
+            `The target image-model formatter is ${profile.label}. ${profile.note}`,
+            ctx.visibleText ? `The exact visible text requirement is: ${ctx.textInstruction}.` : "The source prompt does not request visible text."
+        ], " ");
+    }
+
+    function cleanOllamaResponse(value) {
+        return cleanText(value)
+            .replace(/^```(?:text|markdown)?\s*/i, "")
+            .replace(/\s*```$/i, "")
+            .replace(/^(?:enhanced\s+)?prompt\s*:\s*/i, "")
+            .trim();
+    }
+
+    async function enhanceWithOllama() {
+        if (ollamaRequestInFlight) return;
+        let endpoint;
+        try {
+            endpoint = getOllamaEndpoint();
+        } catch (err) {
+            setOllamaStatus(err.message, "error");
+            return;
+        }
+        const model = ollamaModelSelect.value;
+        const prompt = cleanText(promptOutput.value);
+        if (!model || !prompt) {
+            setOllamaStatus("Choose a local model and build a prompt first.", "error");
+            return;
+        }
+
+        const ctx = buildContext();
+        const profile = getModelProfile();
+        ollamaRequestInFlight = true;
+        ollamaEnhanceButton.disabled = true;
+        setOllamaStatus(`Enhancing with ${model}...`, "busy");
+        try {
+            const response = await fetch(`${endpoint}/api/chat`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json", Accept: "application/json" },
+                body: JSON.stringify({
+                    model,
+                    stream: false,
+                    think: false,
+                    keep_alive: "10m",
+                    options: { temperature: 0.35 },
+                    messages: [
+                        { role: "system", content: buildOllamaSystemPrompt(ctx, profile) },
+                        {
+                            role: "user",
+                            content: cleanJoin([
+                                `Enhancement instruction: ${cleanText(ollamaInstructionInput.value) || "Improve clarity without changing requirements."}`,
+                                `Target model: ${profile.label}.`,
+                                `Source prompt:\n${prompt}`
+                            ], "\n\n")
+                        }
+                    ]
+                })
+            });
+            if (!response.ok) throw new Error(`Ollama responded with ${response.status}.`);
+            const payload = await response.json();
+            const enhanced = cleanOllamaResponse(payload.message && payload.message.content ? payload.message.content : payload.response);
+            if (!enhanced) throw new Error("Ollama returned an empty enhancement.");
+            ollamaOutput.value = enhanced;
+            ollamaOutputGroup.hidden = false;
+            setOllamaStatus(`Enhanced with ${model}.`, "connected");
+            showInfo("Prompt Enhanced", `A local ${model} enhancement is ready to copy without changing the builder configuration.`);
+        } catch (err) {
+            const message = err instanceof TypeError
+                ? "Enhancement could not reach Ollama. Check the service and this page's CORS access."
+                : err.message;
+            setOllamaStatus(message, "error");
+            showInfo("Ollama Enhancement Failed", message);
+        } finally {
+            ollamaRequestInFlight = false;
+            ollamaEnhanceButton.disabled = !ollamaModelSelect.value;
+        }
+    }
+
+    // OLLAMA-END
+
+    function buildContext() {
+        const subject = cleanText(subjectInput.value) || "A subject";
+        const scene = cleanText(sceneInput.value);
+        const visibleText = cleanText(visibleTextInput.value);
+        const negative = cleanText(negativeInput.value);
+        const selected = {};
+        Object.keys(categories).forEach(key => {
+            if (categories[key].type === "multi") {
+                selected[key] = getMultiValues(key);
+            } else if (categories[key].type === "slider") {
+                selected[key] = categories[key].options[state[key]] || categories[key].options[0];
+            } else {
+                selected[key] = getOption(key, state[key]);
+            }
+        });
+        const styleText = getMultiValues("style").map(o => o.value).join(", ");
+        const textureText = getMultiValues("texture").map(o => o.value).join(", ");
+        return {
+            subject,
+            scene,
+            visibleText,
+            negative,
+            selected,
+            styleText,
+            textureText,
+            textInstruction: buildTextInstruction(visibleText),
+            constraints: buildConstraintText(negative)
+        };
+    }
+
+    function buildPromptForModel(ctx, profile) {
+        const s = ctx.selected;
+        const subjectLine = s.framing.value ? `${s.framing.value} of ${ctx.subject}` : ctx.subject;
+        const action = s.action.value;
+        const camera = cleanJoin([s.camera.value, s.focal.value, s.dof.val, s.angle.value], ", ");
+        const look = cleanJoin([s.lighting.value, s.palette.value, s.grading.value], ", ");
+        const style = cleanJoin([ctx.styleText, s.artist.value, ctx.textureText, s.quality.value], ", ");
+        const ratio = s.ratio.value;
+        const composition = cleanJoin([camera, ratio], ", ");
+
+        if (profile.id === "qwen2512") {
+            const parts = [ctx.styleText, subjectLine, ctx.scene, action, camera, look, s.artist.value, ctx.textureText, s.quality.value, ratio, ctx.textInstruction && `visible text ${ctx.textInstruction}`];
+            return cleanJoin(parts, ", ");
+        }
+
+        if (profile.id === "zimage") {
+            return cleanJoin([
+                `${cleanJoin([subjectLine, action], ", ")}.`,
+                ctx.scene && `Environment and background: ${ctx.scene}.`,
+                composition && `Camera and composition: ${composition}.`,
+                look && `Lighting and color: ${look}.`,
+                style && `Style and finish: ${style}.`,
+                ctx.textInstruction && `Render only this visible text exactly: ${ctx.textInstruction}.`,
+                `Technical cleanup: ${ctx.constraints || "no watermark, no random text, correct human anatomy, clean background"}.`
+            ], " ");
+        }
+
+        if (profile.id === "ernie") {
+            return cleanJoin([
+                cleanJoin([subjectLine, action, ctx.scene || "clear cinematic environment"], ", "),
+                style,
+                composition,
+                look,
+                ctx.textInstruction && `text reads ${ctx.textInstruction}`,
+                ctx.constraints && `avoid ${ctx.constraints}`
+            ], ". ");
+        }
+
+        if (profile.id === "boogu") {
+            return cleanJoin([
+                `${subjectLine}${action ? `, ${action},` : ""} set in ${ctx.scene || "a clearly defined cinematic environment"}.`,
+                composition && `The composition uses ${composition}${look ? `, with ${look}` : ""}.`,
+                style && `The artistic style is ${style}.`,
+                ctx.visibleText ? `The image includes visible text ${ctx.textInstruction}, with accurate placement, readable lettering, and no altered wording.` : "The image contains no recognizable text.",
+                ctx.constraints && `Keep the final image clean by avoiding ${ctx.constraints}.`
+            ], " ");
+        }
+
+        if (profile.id === "gptimage2") {
+            return cleanJoin([
+                `Create a cinematic image: ${cleanJoin([subjectLine, action], ", ")}.`,
+                ctx.scene && `Use these scene details: ${ctx.scene}.`,
+                composition && `Compose it with ${composition}.`,
+                look && `Lighting, palette, and grade: ${look}.`,
+                style && `Style references and finish: ${style}.`,
+                ctx.textInstruction ? `Render the visible text exactly as ${ctx.textInstruction}; do not invent extra text.` : "Do not add readable text unless it is necessary for the scene.",
+                ctx.constraints && `Avoid: ${ctx.constraints}.`
+            ], " ");
+        }
+
+        if (profile.id === "krea2") {
+            return cleanJoin([
+                `${subjectLine}`,
+                ctx.scene,
+                action,
+                camera,
+                look,
+                style,
+                ratio,
+                ctx.textInstruction && `visible text ${ctx.textInstruction}`,
+                ctx.constraints && `avoid ${ctx.constraints}`
+            ], ", ");
+        }
+
+        return cleanJoin([
+            `High-end cinematic photography: ${subjectLine}.`,
+            ctx.scene && `Scene: ${ctx.scene}.`,
+            action && `Subject action: ${action}.`,
+            camera && `Cinematography: ${camera}.`,
+            look && `Lighting and color: ${look}.`,
+            style && `Style: ${style}.`,
+            ratio && `Compose for ${ratio}.`,
+            ctx.textInstruction ? `Render visible text exactly as ${ctx.textInstruction}.` : "Do not add extra readable text.",
+            ctx.constraints && `Avoid ${ctx.constraints}.`
+        ], " ");
+    }
+
+    function renderRecipe(ctx, profile) {
+        const chips = [
+            ["Model", profile.label],
+            ["Camera", ctx.selected.camera.label],
+            ["Lens", ctx.selected.focal.label],
+            ["Grade", ctx.selected.grading.label],
+            ["Action", ctx.selected.action.label],
+            ["Ratio", ctx.selected.ratio.label]
+        ];
+        recipePanel.innerHTML = chips.map(([k, v]) => `<span class="recipe-chip"><strong>${escapeHtml(k)}:</strong> ${escapeHtml(v)}</span>`).join("");
+    }
+
+    function renderQualityPanel(prompt, ctx, profile) {
+        const warnings = [];
+        const words = prompt.trim().split(/\s+/).filter(Boolean).length;
+        const styleIds = state.style || [];
+        const hardStyleIds = ["photo", "3d", "clay", "water", "oil", "ghibli"];
+        const hardStyleCount = styleIds.filter(id => hardStyleIds.includes(id)).length;
+        if (hardStyleCount > 2) warnings.push("Several primary visual styles are selected. Pick one main style and one influence for cleaner results.");
+        if ((state.texture || []).includes("clean") && ["grain", "vhs", "burn", "gateweave"].some(id => state.texture.includes(id))) {
+            warnings.push("Clean Digital conflicts with analog texture choices such as grain, VHS, burn, or gate weave.");
+        }
+        if (profile.id === "qwen2512" && ctx.negative) warnings.push("Qwen mode keeps negative terms out of the positive prompt and stores them in JSON only.");
+        if (profile.id === "zimage" && ctx.negative) warnings.push("Z-Image Turbo ignores formal negative prompts; constraints are embedded in the positive text.");
+        if (profile.id === "krea2") warnings.push("Krea 2 guide file is empty, so this mode uses a conservative generic formatter.");
+        if (profile.id === "ernie" && words > 170) warnings.push("ERNIE guide suggests 50-150 words as a practical sweet spot for many prompts.");
+        if (ctx.visibleText && ctx.visibleText.length > 80) warnings.push("Long visible text is harder to render accurately. Short, quoted text blocks work better.");
+        const warningHtml = warnings.length ? `<ul>${warnings.map(w => `<li>${escapeHtml(w)}</li>`).join("")}</ul>` : "";
+        qaPanel.classList.toggle("warning", warnings.length > 0);
+        qaPanel.innerHTML = `<strong>Prompt QA:</strong> ${words} words, ${prompt.length} characters. ${warnings.length ? warningHtml : "No obvious conflicts detected."}`;
+    }
+
+    function buildJsonOutput(ctx, profile, finalPrompt) {
+        return {
+            model: profile.label,
+            model_id: profile.id,
+            subject: ctx.subject,
+            scene_details: ctx.scene,
+            visible_text: ctx.visibleText,
+            negative_prompt: ctx.negative,
+            negative_handling: profile.negativeHandling,
+            parameters: {
+                aspect_ratio: ctx.selected.ratio.label,
+                camera: ctx.selected.camera.label,
+                framing: ctx.selected.framing.label,
+                angle: ctx.selected.angle.label,
+                lens: ctx.selected.focal.label,
+                aperture: ctx.selected.dof.label,
+                action: ctx.selected.action.label,
+                lighting: ctx.selected.lighting.label,
+                palette: ctx.selected.palette.label,
+                grading: ctx.selected.grading.label,
+                style: ctx.styleText,
+                textures: ctx.textureText,
+                artist_or_director: ctx.selected.artist.label,
+                quality: ctx.selected.quality.label
+            },
+            suggested_model_settings: profile.settings,
+            raw_prompt: finalPrompt
+        };
+    }
+
+    function buildTextInstruction(text) {
+        if (!text) return "";
+        return text.split(/\n+/).map(line => line.trim()).filter(Boolean).map(line => `"${line}"`).join(", ");
+    }
+
+    function buildConstraintText(text) {
+        return text.replace(/\s+/g, " ").trim();
+    }
+
+    function getOption(key, id) {
+        const cat = categories[key];
+        return cat.options.find(o => o.id === id) || cat.options[0];
+    }
+
+    function getMultiValues(key) {
+        const ids = Array.isArray(state[key]) ? state[key] : [];
+        return ids.filter(id => id !== "none").map(id => getOption(key, id)).filter(Boolean);
+    }
+
+    function getModelProfile() {
+        return modelProfiles.find(m => m.id === state.model) || modelProfiles[0];
+    }
+
+    function cleanText(value) {
+        return (value || "").trim();
+    }
+
+    function cleanJoin(parts, separator) {
+        return parts.filter(part => part && String(part).trim()).join(separator).replace(/\s+/g, " ").trim();
+    }
+
+    function escapeHtml(value) {
+        return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    function randomFrom(options) {
+        const available = options.filter(option => option.id !== "none");
+        return available[Math.floor(Math.random() * available.length)];
+    }
+
+    function randomize() {
+        const randomCats = ["ratio", "camera", "framing", "angle", "focal", "action", "lighting", "palette", "grading", "artist", "quality"];
+        randomCats.forEach(key => {
+            if (state.locks && state.locks[key]) return;
+            state[key] = randomFrom(categories[key].options).id;
+        });
+        if (!(state.locks && state.locks.dof)) state.dof = categories.dof.options.findIndex(option => option.id === randomFrom(categories.dof.options).id);
+        ["texture", "style"].forEach(key => {
+            if (state.locks && state.locks[key]) return;
+            state[key] = categories[key].options.filter(opt => opt.id !== "none" && Math.random() > 0.78).map(opt => opt.id);
+            if (key === "texture" && state.texture.length === 0) state.texture.push("none");
+            if (key === "style" && state.style.length === 0) state.style.push("photo");
+        });
+        if (!(state.locks && state.locks.subject)) {
+            const subjects = ["A cyberpunk detective", "An ancient forest temple", "A race car on a neon track", "A cyborg geisha", "A lonely lighthouse", "A samurai in a field of flowers", "A spaceship landing on Mars", "A detective entering a neon motel", "A red desert research station"];
+            subjectInput.value = randomFrom(subjects);
+        }
+        updateUI();
+    }
+
+    function rerollLook() {
+        ["camera", "focal", "lighting", "palette", "grading", "artist", "quality"].forEach(key => {
+            if (!(state.locks && state.locks[key])) state[key] = randomFrom(categories[key].options).id;
+        });
+        if (!(state.locks && state.locks.dof)) state.dof = categories.dof.options.findIndex(option => option.id === randomFrom(categories.dof.options).id);
+        updateUI();
+    }
+
+    function getSaveData() {
+        return {
+            version: 4,
+            state,
+            subject: subjectInput.value,
+            scene: sceneInput.value,
+            visibleText: visibleTextInput.value,
+            negative: negativeInput.value,
+            savedAt: new Date().toISOString()
+        };
+    }
+
+    function applySaveData(data) {
+        const incoming = data.state || data;
+        state = normalizeState(incoming);
+        subjectInput.value = data.subject || incoming.subject || "";
+        sceneInput.value = data.scene || incoming.scene || "";
+        visibleTextInput.value = data.visibleText || incoming.visibleText || "";
+        negativeInput.value = data.negative || incoming.negative || "";
+        updateUI();
+    }
+
+    function normalizeState(input) {
+        const next = defaultState();
+        const oldModeMap = {
+            midjourney: "nanobanana",
+            stablediffusion: "krea2",
+            flux: "krea2",
+            nanobanana: "nanobanana"
+        };
+        const merged = { ...next, ...input };
+        if (!merged.model && merged.mode) merged.model = oldModeMap[merged.mode] || "nanobanana";
+        if (!modelProfiles.some(m => m.id === merged.model)) merged.model = "nanobanana";
+        Object.keys(categories).forEach(key => {
+            const cat = categories[key];
+            if (cat.type === "multi") {
+                const selected = Array.isArray(merged[key]) ? merged[key].filter(id => cat.options.some(o => o.id === id)) : next[key];
+                merged[key] = selected.includes("none") ? ["none"] : selected;
+            } else if (cat.type === "slider") {
+                const val = Number.isInteger(merged[key]) ? merged[key] : next[key];
+                merged[key] = Math.max(0, Math.min(cat.options.length - 1, val));
+            } else if (!cat.options.some(o => o.id === merged[key])) {
+                merged[key] = next[key];
+            }
+        });
+        merged.locks = typeof merged.locks === "object" && merged.locks ? merged.locks : {};
+        return merged;
+    }
+
+    function saveTemplate() {
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(getSaveData(), null, 2));
+        const downloadAnchorNode = document.createElement("a");
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "cinematic_prompt_preset.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    function loadTemplate() {
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = ".json";
+        input.onchange = e => {
+            const file = e.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = event => {
+                try {
+                    applySaveData(JSON.parse(event.target.result));
+                    showInfo("Preset Loaded", "The file preset was loaded into the builder.");
+                } catch (err) {
+                    showInfo("Load Failed", "The selected file is not a valid preset JSON.");
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function saveNamedPreset() {
+        const name = cleanText(presetNameInput.value) || `Preset ${new Date().toLocaleString()}`;
+        const presets = readStorage(STORAGE_KEYS.presets, {});
+        presets[name] = getSaveData();
+        writeStorage(STORAGE_KEYS.presets, presets);
+        renderPresetList(name);
+        showInfo("Preset Saved", `${name} was saved locally in this browser.`);
+    }
+
+    function loadNamedPreset() {
+        const name = presetSelect.value;
+        const presets = readStorage(STORAGE_KEYS.presets, {});
+        if (!name || !presets[name]) return;
+        applySaveData(presets[name]);
+        showInfo("Preset Loaded", `${name} was loaded from local storage.`);
+    }
+
+    function deleteNamedPreset() {
+        const name = presetSelect.value;
+        if (!name) return;
+        const presets = readStorage(STORAGE_KEYS.presets, {});
+        delete presets[name];
+        writeStorage(STORAGE_KEYS.presets, presets);
+        renderPresetList();
+        showInfo("Preset Deleted", `${name} was removed from local storage.`);
+    }
+
+    function renderPresetList(selectedName) {
+        const presets = readStorage(STORAGE_KEYS.presets, {});
+        const names = Object.keys(presets).sort();
+        presetSelect.innerHTML = "";
+        const empty = document.createElement("option");
+        empty.value = "";
+        empty.textContent = names.length ? "Choose a saved preset..." : "No local presets yet";
+        presetSelect.appendChild(empty);
+        names.forEach(name => {
+            const option = document.createElement("option");
+            option.value = name;
+            option.textContent = name;
+            presetSelect.appendChild(option);
+        });
+        if (selectedName) presetSelect.value = selectedName;
+    }
+
+    function saveAutosave() {
+        writeStorage(STORAGE_KEYS.autosave, getSaveData());
+    }
+
+    function loadAutosave() {
+        const data = readStorage(STORAGE_KEYS.autosave, null);
+        if (data) applySaveDataWithoutUi(data);
+    }
+
+    function applySaveDataWithoutUi(data) {
+        const incoming = data.state || data;
+        state = normalizeState(incoming);
+        subjectInput.value = data.subject || incoming.subject || subjectInput.value;
+        sceneInput.value = data.scene || incoming.scene || "";
+        visibleTextInput.value = data.visibleText || incoming.visibleText || "";
+        negativeInput.value = data.negative || incoming.negative || "";
+    }
+
+    function storeRecentPrompt() {
+        const recent = readStorage(STORAGE_KEYS.recent, []);
+        recent.unshift({ prompt: promptOutput.value, model: getModelProfile().label, savedAt: new Date().toISOString() });
+        writeStorage(STORAGE_KEYS.recent, recent.slice(0, 15));
+    }
+
+    function loadRecentPrompt() {
+        const recent = readStorage(STORAGE_KEYS.recent, []);
+        if (!recent.length) {
+            showInfo("Recent Prompts", "No copied prompts have been stored yet.");
+            return;
+        }
+        promptOutput.value = recent[0].prompt;
+        showInfo("Recent Prompt", `Loaded the latest copied prompt from ${recent[0].model}.`);
+    }
+
+    function readStorage(key, fallback) {
+        try {
+            const raw = localStorage.getItem(key);
+            return raw ? JSON.parse(raw) : fallback;
+        } catch (err) {
+            return fallback;
+        }
+    }
+
+    function writeStorage(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (err) {
+            console.warn("Storage unavailable", err);
+        }
+    }
+
+    async function copyToClipboard(elementId) {
+        const copyText = document.getElementById(elementId);
+        const text = copyText.value || copyText.textContent || "";
+        try {
+            await navigator.clipboard.writeText(text);
+        } catch (err) {
+            copyText.select();
+            document.execCommand("copy");
+        }
+        if (elementId === "promptOutput") storeRecentPrompt();
+        const btn = copyText.previousElementSibling.querySelector("button");
+        if (!btn) return;
+        const originalText = btn.textContent;
+        btn.textContent = "Copied!";
+        btn.style.background = "#F5C518";
+        btn.style.color = "#111";
+        setTimeout(() => {
+            btn.textContent = originalText;
+            btn.style.background = "";
+            btn.style.color = "";
+        }, 1500);
+    }
+
+    function resetAll() {
+        state = defaultState();
+        subjectInput.value = "";
+        sceneInput.value = "";
+        visibleTextInput.value = "";
+        negativeInput.value = "";
+        updateUI();
+        showInfo("Reset", "The builder has been reset to the default cinematic profile.");
+    }
+
+    init();
+</script>
+</body>
+</html>
